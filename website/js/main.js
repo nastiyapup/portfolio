@@ -7,20 +7,55 @@
   const lerp  = (a, b, n) => a + (b - a) * n;
   const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
-  // Automatic file extension fallback (.JPG <-> .jpg) for images
+  // Request highest available YouTube resolution (4K / 2K / 1080p) via IFrame postMessage API
+  function requestHighestYouTubeQuality(iframe) {
+    if (!iframe) return;
+    function sendQualityHints() {
+      try {
+        if (!iframe.contentWindow) return;
+        ['hd2160', 'hd1440', 'hd1080', 'highres'].forEach(function (q) {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'setPlaybackQuality',
+            args: [q]
+          }), '*');
+        });
+      } catch (e) {}
+    }
+    iframe.addEventListener('load', function () {
+      sendQualityHints();
+      setTimeout(sendQualityHints, 600);
+      setTimeout(sendQualityHints, 1800);
+    });
+  }
+
+  // Automatic file extension & folder fallback for images
   function attachImageFallback(img) {
     if (!img) return;
     img.addEventListener('error', function onImgError() {
       const currentSrc = img.getAttribute('src') || '';
-      if (!img.dataset.triedFallback) {
-        img.dataset.triedFallback = '1';
+      const step = parseInt(img.dataset.fallbackStep || '0', 10);
+
+      if (step === 0) {
+        img.dataset.fallbackStep = '1';
         if (currentSrc.endsWith('.JPG')) {
           img.src = currentSrc.slice(0, -4) + '.jpg';
         } else if (currentSrc.endsWith('.jpg')) {
           img.src = currentSrc.slice(0, -4) + '.JPG';
+        } else if (currentSrc.endsWith('.PNG')) {
+          img.src = currentSrc.slice(0, -4) + '.png';
+        } else if (currentSrc.endsWith('.png')) {
+          img.src = currentSrc.slice(0, -4) + '.PNG';
         } else if (currentSrc.includes('maxresdefault.jpg')) {
-          // If YouTube does not have a maxres image, fallback to hqdefault
           img.src = currentSrc.replace('maxresdefault.jpg', 'hqdefault.jpg');
+        }
+      } else if (step === 1) {
+        // If placed directly in assets/ instead of a project subfolder, try assets/<filename>
+        img.dataset.fallbackStep = '2';
+        const parts = currentSrc.split('/');
+        const fileName = parts[parts.length - 1];
+        if (parts.length > 2 && parts[0] === 'assets') {
+          img.src = 'assets/' + fileName;
         }
       }
     });
@@ -312,24 +347,26 @@
     });
   }
 
-  // ─── 9. VIDEO CARDS & DYNAMIC HOVER PREVIEW ───────────────
+  // ─── 9. VIDEO CARDS & DYNAMIC HOVER / SHOWCASE AUTOPLAY ───
   function initVideoHover() {
     qsa('.work-card-img').forEach(attachImageFallback);
 
-    // Embed autoplay video for Amelie Showcase card
-    const showcaseMedia = qs('[data-showcase-yt]');
-    if (showcaseMedia) {
+    // Embed continuous autoplay video for Showcase cards (Amelie, Cabinet of Memories, Frutiger Aero)
+    const showcaseMedias = qsa('[data-showcase-yt]');
+    showcaseMedias.forEach(function (showcaseMedia) {
       const ytId = showcaseMedia.getAttribute('data-showcase-yt');
+      const isVerticalCover = showcaseMedia.getAttribute('data-showcase-vertical-cover') === 'true';
       const iframe = document.createElement('iframe');
-      iframe.className = 'work-card-preview-iframe';
-      iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`;
+      iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160`;
       iframe.setAttribute('allow', 'autoplay; encrypted-media');
       iframe.setAttribute('frameborder', '0');
+      requestHighestYouTubeQuality(iframe);
       showcaseMedia.appendChild(iframe);
-    }
+    });
 
     // Dynamic Hover Preview for other video cards
-    const videoLinks = qsa('.work-card-link[data-yt-id]:not([data-showcase-yt])');
+    const videoLinks = qsa('.work-card-link[data-yt-id]');
 
     videoLinks.forEach(function (link) {
       const card = link.closest('.work-card');
@@ -340,20 +377,20 @@
 
       if (!card || !media || !ytId) return;
 
-      // Do not inject hover iframe on the main showcase card
-      if (card.classList.contains('work-card--showcase')) return;
+      // Skip hover injection on showcase cards that already autoplay continuously
+      if (media.hasAttribute('data-showcase-yt')) return;
 
       card.addEventListener('mouseenter', function () {
-        // Debounce hover slightly to avoid unnecessary requests while fast-scrolling
         hoverTimeout = setTimeout(function () {
           if (qs('.work-card-preview-iframe', media)) return;
           const iframe = document.createElement('iframe');
           iframe.className = 'work-card-preview-iframe';
-          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&start=${startSec}`;
+          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160&start=${startSec}`;
           iframe.setAttribute('allow', 'autoplay; encrypted-media');
           iframe.setAttribute('frameborder', '0');
+          requestHighestYouTubeQuality(iframe);
           media.appendChild(iframe);
-        }, 320);
+        }, 260);
       });
 
       card.addEventListener('mouseleave', function () {
@@ -401,60 +438,37 @@
     });
   }
 
-  // ─── 10. ABOUT SECTION LIVING PORTRAIT UNMUTE BUTTON ──────
+  // ─── 10. ABOUT SECTION LOCAL MP4 LIVING PORTRAIT UNMUTE ───
   function initAboutIntroVideo() {
     const unmuteBtn = qs('#aboutUnmuteBtn');
     const iconEl    = qs('#aboutUnmuteIcon');
     const textEl    = qs('#aboutUnmuteText');
-    const iframe    = qs('#aboutIntroIframe');
-    if (!unmuteBtn || !iframe) return;
+    const video     = qs('#aboutIntroVideo');
+    if (!unmuteBtn || !video) return;
 
-    let isMuted = true;
+    video.play().catch(function () {});
 
     unmuteBtn.addEventListener('click', function (e) {
       e.preventDefault();
-      isMuted = !isMuted;
-
-      if (!isMuted) {
+      if (video.muted) {
+        video.muted = false;
+        try {
+          video.currentTime = 0;
+        } catch (err) {}
+        video.play().catch(function () {});
         unmuteBtn.classList.add('is-unmuted');
         if (iconEl) iconEl.textContent = '🔇';
         if (textEl) textEl.textContent = 'Mute Video';
-
-        // Send postMessage to YouTube Iframe
-        try {
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'unMute',
-            args: ''
-          }), '*');
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'seekTo',
-            args: [0, true]
-          }), '*');
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'playVideo',
-            args: ''
-          }), '*');
-        } catch (err) {}
       } else {
+        video.muted = true;
         unmuteBtn.classList.remove('is-unmuted');
         if (iconEl) iconEl.textContent = '🔊';
         if (textEl) textEl.textContent = 'Click to Unmute & Listen';
-
-        try {
-          iframe.contentWindow.postMessage(JSON.stringify({
-            event: 'command',
-            func: 'mute',
-            args: ''
-          }), '*');
-        } catch (err) {}
       }
     });
   }
 
-  // ─── 11. VIDEO MODAL (FULLSCREEN YOUTUBE PLAYER) ──────────
+  // ─── 11. VIDEO MODAL (FULLSCREEN YOUTUBE PLAYER IN MAX QUALITY) ───
   function initVideoModal() {
     const modal       = qs('#videoModal');
     if (!modal) return;
@@ -465,9 +479,11 @@
     const fallbackBtn = qs('#videoModalYtFallback', modal);
     const triggers    = qsa('.work-card-link[data-yt-id]');
 
+    requestHighestYouTubeQuality(modalIframe);
+
     function openModal(ytId) {
       if (modalIframe) {
-        modalIframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&playsinline=1`;
+        modalIframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&rel=0&playsinline=1&vq=hd2160`;
       }
       if (fallbackBtn) {
         fallbackBtn.href = `https://youtu.be/${ytId}`;
@@ -547,7 +563,7 @@
       if (stage) stage.classList.remove('is-zoomed');
 
       if (modalImg) {
-        delete modalImg.dataset.triedFallback;
+        delete modalImg.dataset.fallbackStep;
         modalImg.src = activeSrc;
         modalImg.alt = currentModalTitle
           ? currentModalTitle + ' (' + (currentGalleryIndex + 1) + '/' + gallerySources.length + ')'
@@ -762,7 +778,6 @@
               wrap.appendChild(label);
             }
 
-            // Convert standard youtu.be / watch URLs to nocookie embed
             let embedUrl = vSrc;
             if (vSrc.includes('youtu.be/')) {
               const id = vSrc.split('youtu.be/')[1].split('?')[0];
@@ -775,13 +790,15 @@
               embedUrl = `https://www.youtube-nocookie.com/embed/${id}`;
             }
 
+            const sep = embedUrl.includes('?') ? '&' : '?';
             const iframe = document.createElement('iframe');
-            iframe.src = embedUrl;
+            iframe.src = `${embedUrl}${sep}enablejsapi=1&rel=0&vq=hd2160`;
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
             iframe.setAttribute('allowfullscreen', 'true');
             iframe.style.width = '100%';
             iframe.style.aspectRatio = '16/9';
+            requestHighestYouTubeQuality(iframe);
             wrap.appendChild(iframe);
 
             mediaContainer.appendChild(wrap);
@@ -836,16 +853,13 @@
     });
   }
 
-  // ─── 14. CATEGORY FILTER (GROUPS HORIZONTALS & VERTICALS) ─
+  // ─── 14. CATEGORY FILTER (KEEPS HORIZONTALS & VERTICALS SEPARATED) ─
   function initCategoryFilter() {
     const filterBtns = qsa('.filter-btn');
     const grid       = qs('.works-grid');
     const workCards  = qsa('.work-card');
+    const gridBreak  = qs('.works-grid-break');
     if (!filterBtns.length || !workCards.length || !grid) return;
-
-    workCards.forEach(function (card, idx) {
-      card.dataset.originalOrder = String(idx);
-    });
 
     filterBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -870,9 +884,13 @@
           if (filter === 'all') {
             card.style.order = '';
           } else {
-            card.style.order = card.classList.contains('work-card--vertical') ? '2' : '1';
+            card.style.order = card.classList.contains('work-card--vertical') ? '3' : '1';
           }
         });
+
+        if (gridBreak) {
+          gridBreak.style.order = filter === 'all' ? '' : '2';
+        }
 
         ScrollTrigger.refresh();
       });

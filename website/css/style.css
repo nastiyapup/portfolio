@@ -814,8 +814,16 @@ ul, ol { list-style: none; }
     align-items: start;
 }
 
+/* Full-width invisible row separator between horizontal and vertical cards */
+.works-grid-break {
+    grid-column: 1 / -1;
+    height: 0;
+    margin: -14px 0;
+    pointer-events: none;
+}
+
 /* ==============================================
-   WORK CARDS & POSTERS
+   WORK CARDS & FULL-BLEED COVERS (NO PLAY BADGES)
    ============================================== */
 .work-card {
     grid-column: span 3;
@@ -842,7 +850,7 @@ ul, ol { list-style: none; }
     grid-column: span 6;
 }
 
-/* Showcase Card (Amelie VFX Trailer) */
+/* Showcase Cards (Amelie, Cabinet of Memories, Frutiger Aero) */
 .work-card--showcase {
     box-shadow: 0 40px 100px rgba(110, 58, 255, 0.12);
     border-color: rgba(184, 152, 255, 0.2);
@@ -852,7 +860,7 @@ ul, ol { list-style: none; }
     aspect-ratio: 16 / 9 !important;
 }
 
-/* Vertical 9:16 Cards */
+/* Vertical 9:16 Cards (3 per row, compact height) */
 .work-card--vertical {
     grid-column: span 2;
 }
@@ -877,7 +885,7 @@ ul, ol { list-style: none; }
 .work-card--vertical .work-card-media {
     aspect-ratio: 9 / 16;
     max-height: 430px;
-    background: #050508;
+    background: var(--color-bg-light);
 }
 
 .work-card--vertical .work-card-content {
@@ -888,18 +896,20 @@ ul, ol { list-style: none; }
     font-size: clamp(19px, 2vw, 24px);
 }
 
-/* Card Images with Smooth Zoom-In */
+/* Card Images with Smooth Hover Zoom-In & Full-Bleed Cover Fit */
 .work-card-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center center;
     transform: scale(1);
     will-change: transform;
     transition: transform 0.75s var(--ease-out-expo), filter 0.5s var(--ease-out-expo);
 }
 
 .work-card--vertical .work-card-img {
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center top;
 }
 
 .work-card:hover .work-card-img {
@@ -907,7 +917,7 @@ ul, ol { list-style: none; }
 }
 
 .work-card--vertical:hover .work-card-img {
-    transform: scale(1.04);
+    transform: scale(1.05);
 }
 
 .work-card--photo:hover .work-card-img {
@@ -915,7 +925,16 @@ ul, ol { list-style: none; }
     filter: brightness(1.05) contrast(1.02);
 }
 
-/* Dynamic Live Hover Preview Iframes */
+/* Frutiger Aero: stretch vertical Short horizontally edge-to-edge across widescreen card */
+.work-card--frutiger-cover .work-card-img {
+    transform: scale(3.25);
+}
+
+.work-card--frutiger-cover:hover .work-card-img {
+    transform: scale(3.38);
+}
+
+/* Dynamic Live Hover & Showcase Preview Iframes */
 .work-card-preview-iframe {
     position: absolute;
     inset: 0;
@@ -924,39 +943,28 @@ ul, ol { list-style: none; }
     border: none;
     z-index: 2;
     pointer-events: none;
+    transition: transform 0.75s var(--ease-out-expo);
 }
 
-/* Sleek Play Badge on Video Cards */
-.work-card-play-badge {
-    position: absolute;
+.work-card:hover .work-card-preview-iframe {
+    transform: scale(1.05);
+}
+
+/* Stretches a 9:16 vertical YouTube Short horizontally to fill a 16:9 widescreen showcase card */
+.work-card-preview-iframe--vertical-cover {
+    inset: auto;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: rgba(8, 8, 16, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text);
-    z-index: 3;
-    opacity: 0.85;
-    transition: opacity 0.3s, transform 0.4s var(--ease-out-expo), background 0.3s, border-color 0.3s;
+    width: 100%;
+    height: 318%;
+    transform: translate(-50%, -50%) scale(1.02);
 }
 
-.work-card:hover .work-card-play-badge {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 1;
-    background: var(--color-accent);
-    border-color: var(--color-accent);
-    color: var(--color-bg);
+.work-card:hover .work-card-preview-iframe--vertical-cover {
+    transform: translate(-50%, -50%) scale(1.08);
 }
 
-/* Constant Automatic Sliding Image Gallery */
+/* Constant Automatic Sliding Image Gallery (Full Bleed) */
 .work-card-slider-track {
     display: flex;
     width: 100%;
@@ -970,12 +978,15 @@ ul, ol { list-style: none; }
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center center;
     transform: scale(1);
     transition: transform 0.8s var(--ease-out-expo), filter 0.5s var(--ease-out-expo);
 }
 
+/* Portrait Photography fills the entire vertical frame edge-to-edge */
 .work-card--vertical .work-card-slide-img {
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center top;
 }
 
 .work-card--slider:hover .work-card-slide-img {
@@ -984,7 +995,7 @@ ul, ol { list-style: none; }
 }
 
 .work-card--slider.work-card--vertical:hover .work-card-slide-img {
-    transform: scale(1.03);
+    transform: scale(1.05);
 }
 
 .work-card-slider-dots {
@@ -1019,7 +1030,7 @@ ul, ol { list-style: none; }
 .work-card-overlay {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     background: linear-gradient(to top,
         rgba(8, 8, 16, 0.75) 0%,
         rgba(8, 8, 16, 0) 55%
@@ -1147,8 +1158,8 @@ ul, ol { list-style: none; }
 
 .video-modal-inner {
     position: relative;
-    width: 90vw;
-    max-width: 1200px;
+    width: 92vw;
+    max-width: 1440px;
     aspect-ratio: 16 / 9;
     transform: scale(0.9);
     opacity: 0;
@@ -1617,7 +1628,7 @@ ul, ol { list-style: none; }
 
 
 /* ==============================================
-   ABOUT SECTION
+   ABOUT SECTION (CLEAN LOCAL MP4 LIVING PORTRAIT)
    ============================================== */
 .about {
     padding: 120px 0 160px;
@@ -1741,8 +1752,10 @@ ul, ol { list-style: none; }
 .about-intro-video {
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    object-position: center top;
     border: none;
-    pointer-events: none;
+    display: block;
 }
 
 .about-image-frame {
