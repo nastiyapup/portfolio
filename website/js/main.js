@@ -18,6 +18,9 @@
           img.src = currentSrc.slice(0, -4) + '.jpg';
         } else if (currentSrc.endsWith('.jpg')) {
           img.src = currentSrc.slice(0, -4) + '.JPG';
+        } else if (currentSrc.includes('maxresdefault.jpg')) {
+          // If YouTube does not have a maxres image, fallback to hqdefault
+          img.src = currentSrc.replace('maxresdefault.jpg', 'hqdefault.jpg');
         }
       }
     });
@@ -309,52 +312,54 @@
     });
   }
 
-  // ─── 9. VIDEO PREVIEW & HOVER PLAY (WITH AUTOPLAY SHOWCASE) ───
+  // ─── 9. VIDEO CARDS & DYNAMIC HOVER PREVIEW ───────────────
   function initVideoHover() {
-    const workCards = qsa('.work-card');
+    qsa('.work-card-img').forEach(attachImageFallback);
 
-    workCards.forEach(function (card) {
-      const video = qs('.work-card-video', card);
-      const placeholderImg = qs('.work-card-placeholder .work-card-img', card);
+    // Embed autoplay video for Amelie Showcase card
+    const showcaseMedia = qs('[data-showcase-yt]');
+    if (showcaseMedia) {
+      const ytId = showcaseMedia.getAttribute('data-showcase-yt');
+      const iframe = document.createElement('iframe');
+      iframe.className = 'work-card-preview-iframe';
+      iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1`;
+      iframe.setAttribute('allow', 'autoplay; encrypted-media');
+      iframe.setAttribute('frameborder', '0');
+      showcaseMedia.appendChild(iframe);
+    }
 
-      if (placeholderImg) {
-        attachImageFallback(placeholderImg);
-        placeholderImg.addEventListener('error', function () {
-          const holder = placeholderImg.closest('.work-card-placeholder');
-          if (holder) holder.style.display = 'none';
-        });
-      }
+    // Dynamic Hover Preview for other video cards
+    const videoLinks = qsa('.work-card-link[data-yt-id]:not([data-showcase-yt])');
 
-      if (!video) return;
+    videoLinks.forEach(function (link) {
+      const card = link.closest('.work-card');
+      const media = qs('.work-card-media', link);
+      const ytId = link.getAttribute('data-yt-id');
+      const startSec = parseInt(link.getAttribute('data-preview-start') || '0', 10);
+      let hoverTimeout = null;
 
-      // If this is the Amelie showcase card, play it right away and keep it playing continuously
-      if (video.getAttribute('data-autoplay-always') === 'true') {
-        video.play().catch(function () {});
-        return;
-      }
+      if (!card || !media || !ytId) return;
 
-      const previewStart = parseFloat(video.getAttribute('data-preview-start')) || 0.5;
-
-      function setToPreviewTime() {
-        try {
-          if (video.readyState >= 1) {
-            video.currentTime = previewStart;
-          }
-        } catch (e) {}
-      }
-
-      video.addEventListener('loadedmetadata', setToPreviewTime, { once: true });
+      // Do not inject hover iframe on the main showcase card
+      if (card.classList.contains('work-card--showcase')) return;
 
       card.addEventListener('mouseenter', function () {
-        if (Math.abs(video.currentTime - previewStart) > 0.5 && video.paused) {
-          setToPreviewTime();
-        }
-        video.play().catch(function () {});
+        // Debounce hover slightly to avoid unnecessary requests while fast-scrolling
+        hoverTimeout = setTimeout(function () {
+          if (qs('.work-card-preview-iframe', media)) return;
+          const iframe = document.createElement('iframe');
+          iframe.className = 'work-card-preview-iframe';
+          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&start=${startSec}`;
+          iframe.setAttribute('allow', 'autoplay; encrypted-media');
+          iframe.setAttribute('frameborder', '0');
+          media.appendChild(iframe);
+        }, 320);
       });
 
       card.addEventListener('mouseleave', function () {
-        video.pause();
-        setToPreviewTime();
+        clearTimeout(hoverTimeout);
+        const iframe = qs('.work-card-preview-iframe', media);
+        if (iframe) iframe.remove();
       });
     });
   }
@@ -388,7 +393,6 @@
 
       card.dataset.activeSlideIndex = '0';
 
-      // Constant automatic sliding (staggered slightly per card so they feel organic)
       setTimeout(function () {
         setInterval(function () {
           goToSlide(currentIndex + 1);
@@ -399,54 +403,75 @@
 
   // ─── 10. ABOUT SECTION LIVING PORTRAIT UNMUTE BUTTON ──────
   function initAboutIntroVideo() {
-    const video     = qs('#aboutIntroVideo');
     const unmuteBtn = qs('#aboutUnmuteBtn');
     const iconEl    = qs('#aboutUnmuteIcon');
     const textEl    = qs('#aboutUnmuteText');
-    if (!video || !unmuteBtn) return;
+    const iframe    = qs('#aboutIntroIframe');
+    if (!unmuteBtn || !iframe) return;
 
-    video.play().catch(function () {});
+    let isMuted = true;
 
-    unmuteBtn.addEventListener('click', function () {
-      if (video.muted) {
-        video.muted = false;
-        try {
-          video.currentTime = 0;
-        } catch (e) {}
-        video.play().catch(function () {});
+    unmuteBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      isMuted = !isMuted;
+
+      if (!isMuted) {
         unmuteBtn.classList.add('is-unmuted');
         if (iconEl) iconEl.textContent = '🔇';
         if (textEl) textEl.textContent = 'Mute Video';
+
+        // Send postMessage to YouTube Iframe
+        try {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'unMute',
+            args: ''
+          }), '*');
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'seekTo',
+            args: [0, true]
+          }), '*');
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'playVideo',
+            args: ''
+          }), '*');
+        } catch (err) {}
       } else {
-        video.muted = true;
         unmuteBtn.classList.remove('is-unmuted');
         if (iconEl) iconEl.textContent = '🔊';
         if (textEl) textEl.textContent = 'Click to Unmute & Listen';
+
+        try {
+          iframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: 'mute',
+            args: ''
+          }), '*');
+        } catch (err) {}
       }
     });
   }
 
-  // ─── 11. VIDEO MODAL (ALWAYS PLAYS FROM 0:00 FULLSCREEN) ──
+  // ─── 11. VIDEO MODAL (FULLSCREEN YOUTUBE PLAYER) ──────────
   function initVideoModal() {
-    const modal      = qs('#videoModal');
+    const modal       = qs('#videoModal');
     if (!modal) return;
 
-    const modalVideo = qs('#videoModalPlayer', modal) || qs('video', modal);
-    const closeBtn   = qs('#videoModalClose', modal) || qs('.video-modal-close', modal);
-    const backdrop   = qs('#videoModalBackdrop', modal) || qs('.video-modal-backdrop', modal);
-    const triggers   = qsa('.work-card-link[data-video-src]');
+    const modalIframe = qs('#videoModalIframe', modal);
+    const closeBtn    = qs('#videoModalClose', modal);
+    const backdrop    = qs('#videoModalBackdrop', modal);
+    const fallbackBtn = qs('#videoModalYtFallback', modal);
+    const triggers    = qsa('.work-card-link[data-yt-id]');
 
-    function openModal(rawSrc) {
-      if (modalVideo) {
-        const cleanSrc = rawSrc.split('#')[0];
-        modalVideo.src = encodeURI(cleanSrc);
-        modalVideo.load();
-        modalVideo.addEventListener('loadedmetadata', function () {
-          try {
-            modalVideo.currentTime = 0;
-          } catch (e) {}
-        }, { once: true });
-        modalVideo.play().catch(function () {});
+    function openModal(ytId) {
+      if (modalIframe) {
+        modalIframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&playsinline=1`;
+      }
+      if (fallbackBtn) {
+        fallbackBtn.href = `https://youtu.be/${ytId}`;
+        fallbackBtn.classList.remove('is-hidden');
       }
       modal.classList.add('is-open');
       modal.setAttribute('aria-hidden', 'false');
@@ -456,10 +481,11 @@
     function closeModal() {
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
-      if (modalVideo) {
-        modalVideo.pause();
-        modalVideo.removeAttribute('src');
-        modalVideo.load();
+      if (modalIframe) {
+        modalIframe.src = '';
+      }
+      if (fallbackBtn) {
+        fallbackBtn.classList.add('is-hidden');
       }
       document.body.style.overflow = '';
     }
@@ -467,8 +493,9 @@
     triggers.forEach(function (link) {
       link.addEventListener('click', function (e) {
         e.preventDefault();
-        const src = link.getAttribute('data-video-src');
-        if (src) openModal(src);
+        e.stopPropagation();
+        const ytId = link.getAttribute('data-yt-id');
+        if (ytId) openModal(ytId);
       });
     });
 
@@ -634,6 +661,7 @@
     triggers.forEach(function (link) {
       link.addEventListener('click', function (e) {
         e.preventDefault();
+        e.stopPropagation();
         openModal(link);
       });
     });
@@ -661,7 +689,7 @@
     });
   }
 
-  // ─── 13. PROJECT DETAIL PANEL ─────────────────────────────
+  // ─── 13. PROJECT DETAIL PANEL (DRAWER) ────────────────────
   function initProjectDetail() {
     const panel          = qs('#projectDetail');
     if (!panel) return;
@@ -734,12 +762,28 @@
               wrap.appendChild(label);
             }
 
-            const vid = document.createElement('video');
-            vid.controls = true;
-            vid.playsInline = true;
-            vid.preload = 'metadata';
-            vid.src = encodeURI(vSrc);
-            wrap.appendChild(vid);
+            // Convert standard youtu.be / watch URLs to nocookie embed
+            let embedUrl = vSrc;
+            if (vSrc.includes('youtu.be/')) {
+              const id = vSrc.split('youtu.be/')[1].split('?')[0];
+              embedUrl = `https://www.youtube-nocookie.com/embed/${id}`;
+            } else if (vSrc.includes('youtube.com/shorts/')) {
+              const id = vSrc.split('shorts/')[1].split('?')[0];
+              embedUrl = `https://www.youtube-nocookie.com/embed/${id}`;
+            } else if (vSrc.includes('watch?v=')) {
+              const id = vSrc.split('watch?v=')[1].split('&')[0];
+              embedUrl = `https://www.youtube-nocookie.com/embed/${id}`;
+            }
+
+            const iframe = document.createElement('iframe');
+            iframe.src = embedUrl;
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+            iframe.setAttribute('allowfullscreen', 'true');
+            iframe.style.width = '100%';
+            iframe.style.aspectRatio = '16/9';
+            wrap.appendChild(iframe);
+
             mediaContainer.appendChild(wrap);
           });
         }
@@ -769,9 +813,7 @@
       panel.classList.remove('is-open');
       panel.setAttribute('aria-hidden', 'true');
       if (mediaContainer) {
-        qsa('video', mediaContainer).forEach(function (v) {
-          v.pause();
-        });
+        qsa('iframe', mediaContainer).forEach(function (ifr) { ifr.src = ''; });
       }
       document.body.style.overflow = '';
     }
@@ -794,14 +836,13 @@
     });
   }
 
-  // ─── 14. CATEGORY FILTER (GROUPS HORIZONTALS & VERTICALS CLEANLY) ───
+  // ─── 14. CATEGORY FILTER (GROUPS HORIZONTALS & VERTICALS) ─
   function initCategoryFilter() {
     const filterBtns = qsa('.filter-btn');
     const grid       = qs('.works-grid');
     const workCards  = qsa('.work-card');
     if (!filterBtns.length || !workCards.length || !grid) return;
 
-    // Remember original DOM order for "All"
     workCards.forEach(function (card, idx) {
       card.dataset.originalOrder = String(idx);
     });
@@ -826,7 +867,6 @@
             card.classList.add('is-hidden');
           }
 
-          // When filtering a specific category, group horizontal cards together first and vertical cards together below so they never mix in the same row
           if (filter === 'all') {
             card.style.order = '';
           } else {
@@ -876,7 +916,7 @@
     });
   }
 
-  // ─── 17. MARQUEE SPEED (FASTER BASE + SMOOTH SCROLL BOOST) ──
+  // ─── 17. MARQUEE SPEED ────────────────────────────────────
   function initMarqueeSpeed() {
     const tracks = qsa('.marquee-track');
     if (!tracks.length) return;
