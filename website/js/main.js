@@ -6,6 +6,8 @@
   const qsa = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
   const lerp  = (a, b, n) => a + (b - a) * n;
   const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+  const hasGSAP = () => typeof window.gsap !== 'undefined';
+  const hasScrollTrigger = () => typeof window.ScrollTrigger !== 'undefined';
 
   // Request highest available YouTube resolution (4K / 2K / 1080p) via IFrame postMessage API
   function requestHighestYouTubeQuality(iframe) {
@@ -60,52 +62,67 @@
     });
   }
 
-  // ─── 1. PRELOADER ─────────────────────────────────────────
+  // ─── 1. CRASH-PROOF PRELOADER ─────────────────────────────
   function initPreloader() {
     const preloader  = qs('#preloader') || qs('.preloader');
     const counter    = qs('#preloaderCounter') || qs('.preloader-counter');
     const progressEl = qs('#preloaderProgress') || qs('.preloader-progress');
-    if (!preloader) return;
 
-    let current = 0;
-    const target = 100;
-    const duration = 1400;
-    const start = performance.now();
-
-    function tick(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      current = Math.round(progress * target);
-
-      if (counter) counter.textContent = current;
-      if (progressEl) progressEl.style.width = current + '%';
-
-      if (progress < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        preloader.classList.add('is-done');
-        gsap.to(preloader, {
-          opacity: 0,
-          duration: 0.55,
-          ease: 'power2.inOut',
-          onComplete() {
-            preloader.style.display = 'none';
-            initHeroEntrance();
-          }
-        });
-      }
+    if (!preloader) {
+      initHeroEntrance();
+      return;
     }
 
-    requestAnimationFrame(tick);
+    let finished = false;
+    let current = 0;
+
+    function completePreloader() {
+      if (finished) return;
+      finished = true;
+
+      if (counter) counter.textContent = '100';
+      if (progressEl) progressEl.style.width = '100%';
+
+      preloader.classList.add('is-done');
+      document.body.classList.add('is-loaded');
+
+      setTimeout(function () {
+        preloader.style.display = 'none';
+        initHeroEntrance();
+      }, 550);
+    }
+
+    // Use setInterval so it ticks reliably even if tab is backgrounded or rAF is throttled
+    const timer = setInterval(function () {
+      current += 5;
+      if (current >= 100) {
+        current = 100;
+        clearInterval(timer);
+        completePreloader();
+      } else {
+        if (counter) counter.textContent = String(current);
+        if (progressEl) progressEl.style.width = current + '%';
+      }
+    }, 45);
+
+    // Hard fail-safe: guarantee preloader closes within 2.2s under all conditions
+    setTimeout(function () {
+      clearInterval(timer);
+      completePreloader();
+    }, 2200);
   }
 
   // ─── 2. HERO ENTRANCE ─────────────────────────────────────
   function initHeroEntrance() {
+    document.body.classList.add('is-loaded');
+
+    if (!hasGSAP()) return;
+
     const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
 
     tl.to('.hero-line-inner', {
       y: '0%',
-      duration: 1.2,
+      duration: 1.1,
       stagger: 0.1
     })
     .to('.hero-role', {
@@ -144,7 +161,6 @@
         }
       });
 
-      // Prime first frame for mobile & desktop browsers
       const primePromise = bgVideo.play();
       if (primePromise && typeof primePromise.then === 'function') {
         primePromise.then(function () {
@@ -185,14 +201,12 @@
     function tickDayNight() {
       smoothProgress = lerp(smoothProgress, targetProgress, 0.12);
 
-      // Update Timecode UI
       const pct = (smoothProgress * 100).toFixed(2) + '%';
       if (progressEl) progressEl.style.height = pct;
       if (playheadEl) playheadEl.style.top = pct;
       if (readoutEl)  readoutEl.textContent = formatTimecode(smoothProgress);
       if (phaseEl)    phaseEl.textContent = getDayPhase(smoothProgress);
 
-      // Non-blocking video frame scrub (waits for previous seek to finish so browser never lags)
       if (bgVideo && bgVideo.readyState >= 2 && !bgVideo.seeking) {
         const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
         if (Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
@@ -211,7 +225,7 @@
   // ─── 4. LETTERBOX ─────────────────────────────────────────
   function initLetterbox() {
     const hero = qs('.hero');
-    if (!hero) return;
+    if (!hero || !hasScrollTrigger()) return;
 
     ScrollTrigger.create({
       trigger: hero,
@@ -300,6 +314,7 @@
 
   // ─── 6. MAGNETIC BUTTONS ──────────────────────────────────
   function initMagneticButtons() {
+    if (!hasGSAP()) return;
     const magnets = qsa('[data-magnetic]');
 
     magnets.forEach(function (el) {
@@ -388,6 +403,14 @@
   // ─── 9. SCROLL REVEAL ─────────────────────────────────────
   function initScrollReveal() {
     const revealEls = qsa('[data-scroll-reveal]');
+    const cards     = qsa('[data-scroll-reveal-card]');
+
+    if (!hasScrollTrigger()) {
+      revealEls.forEach(el => el.classList.add('is-visible'));
+      cards.forEach(card => card.classList.add('is-visible'));
+      return;
+    }
+
     revealEls.forEach(function (el) {
       ScrollTrigger.create({
         trigger: el,
@@ -399,24 +422,25 @@
       });
     });
 
-    const headingLines = qsa('.heading-line span');
-    headingLines.forEach(function (span) {
-      gsap.fromTo(span,
-        { y: '110%' },
-        {
-          y: '0%',
-          duration: 1,
-          ease: 'power4.out',
-          scrollTrigger: {
-            trigger: span.closest('.heading-line') || span,
-            start: 'top 90%',
-            once: true
+    if (hasGSAP()) {
+      const headingLines = qsa('.heading-line span');
+      headingLines.forEach(function (span) {
+        gsap.fromTo(span,
+          { y: '110%' },
+          {
+            y: '0%',
+            duration: 1,
+            ease: 'power4.out',
+            scrollTrigger: {
+              trigger: span.closest('.heading-line') || span,
+              start: 'top 90%',
+              once: true
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    }
 
-    const cards = qsa('[data-scroll-reveal-card]');
     cards.forEach(function (card) {
       ScrollTrigger.create({
         trigger: card,
@@ -433,8 +457,6 @@
   function initVideoHover() {
     qsa('.work-card-img').forEach(attachImageFallback);
 
-    // 10A. Showcase cards (Amelie, Cabinet of Memories, Frutiger Aero):
-    // Mount & play ONLY when visible in the viewport; unload when scrolled out of view
     const showcaseMedias = qsa('[data-showcase-yt]');
 
     if ('IntersectionObserver' in window) {
@@ -456,7 +478,6 @@
               requestHighestYouTubeQuality(iframe);
               media.appendChild(iframe);
 
-              // If a custom loop cutoff is set (e.g., 22s for Cabinet of Memories), seek back to 0:00 before credits
               if (endSec > 0) {
                 media._loopTimer = setInterval(function () {
                   try {
@@ -492,7 +513,6 @@
       });
     }
 
-    // 10B. Dynamic Hover Preview for non-showcase video cards
     const videoLinks = qsa('.work-card-link[data-yt-id]');
 
     videoLinks.forEach(function (link) {
@@ -526,7 +546,7 @@
     });
   }
 
-  // ─── 10C. VIEWPORT-ONLY GPU-ACCELERATED IMAGE SLIDERS ─────
+  // ─── 10B. VIEWPORT-ONLY GPU-ACCELERATED IMAGE SLIDERS ─────
   function initConstantSliders() {
     qsa('.work-card-img, .work-card-slide-img').forEach(attachImageFallback);
 
@@ -556,7 +576,6 @@
 
       function startSlider() {
         if (sliderTimer) return;
-        // Pre-decode images in this card before sliding
         slides.forEach(function (img) {
           if (img.loading === 'lazy') img.loading = 'eager';
         });
@@ -599,7 +618,6 @@
     const video     = qs('#aboutIntroVideo');
     if (!unmuteBtn || !video) return;
 
-    // Only play the About video when the user scrolls down to the About section
     if ('IntersectionObserver' in window) {
       const aboutObs = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
@@ -1057,7 +1075,9 @@
           gridBreak.style.order = filter === 'all' ? '' : '2';
         }
 
-        ScrollTrigger.refresh();
+        if (hasScrollTrigger()) {
+          ScrollTrigger.refresh();
+        }
       });
     });
   }
@@ -1133,30 +1153,52 @@
     requestAnimationFrame(updateMarquee);
   }
 
-  // ─── INIT ─────────────────────────────────────────────────
+  // ─── SAFE INIT ────────────────────────────────────────────
   function init() {
-    gsap.registerPlugin(ScrollTrigger);
-
+    // 1. Always start preloader immediately so the page can never get stuck on 0%
     initPreloader();
-    initDayNightScrollExperience();
-    initLetterbox();
-    initCursor();
-    initMagneticButtons();
-    initNavigation();
-    initMobileMenu();
-    initScrollReveal();
-    initVideoHover();
-    initConstantSliders();
-    initAboutIntroVideo();
-    initVideoModal();
-    initImageModal();
-    initProjectDetail();
-    initCategoryFilter();
-    initSmoothScroll();
-    initBackToTop();
-    initMarqueeSpeed();
+
+    // 2. Register GSAP plugins safely if loaded
+    try {
+      if (hasGSAP() && hasScrollTrigger()) {
+        gsap.registerPlugin(ScrollTrigger);
+      }
+    } catch (e) {}
+
+    // 3. Run each module inside an isolated safety block
+    const modules = [
+      initDayNightScrollExperience,
+      initLetterbox,
+      initCursor,
+      initMagneticButtons,
+      initNavigation,
+      initMobileMenu,
+      initScrollReveal,
+      initVideoHover,
+      initConstantSliders,
+      initAboutIntroVideo,
+      initVideoModal,
+      initImageModal,
+      initProjectDetail,
+      initCategoryFilter,
+      initSmoothScroll,
+      initBackToTop,
+      initMarqueeSpeed
+    ];
+
+    modules.forEach(function (fn) {
+      try {
+        fn();
+      } catch (err) {
+        console.error('Module init error:', err);
+      }
+    });
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
 })();

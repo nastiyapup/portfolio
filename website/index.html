@@ -38,13 +38,13 @@
         <video class="sky-bg-video" id="bgDayVideo" muted playsinline preload="auto">
             <source src="assets/BGvideo.mp4" type="video/mp4">
         </video>
-        <div class="sky-bg-vignette"></div>
+        <div class="sky-bg-vignette" id="skyBgVignette"></div>
     </div>
 
-    <!-- ========== CINEMATIC TIMECODE SCROLLBAR ========== -->
-    <aside class="timecode-rail" id="timecodeRail" aria-hidden="true">
+    <!-- ========== INTERACTIVE TIMECODE SCROLLBAR (REPLACES NATIVE SCROLLBAR) ========== -->
+    <aside class="timecode-rail" id="timecodeRail" aria-label="Interactive Day Timeline Scrollbar">
         <span class="timecode-bound">00:00</span>
-        <div class="timecode-track">
+        <div class="timecode-track" id="timecodeTrack" title="Click or drag to scrub through the day">
             <div class="timecode-progress" id="timecodeProgress"></div>
             <div class="timecode-playhead" id="timecodePlayhead">
                 <span class="timecode-phase" id="timecodePhase">DAWN</span>
@@ -81,8 +81,11 @@
         </div>
     </div>
 
-    <!-- ========== HERO SECTION ========== -->
+    <!-- ========== HERO SECTION WITH 3D DISSOLVING CLOUDS ========== -->
     <section class="hero" id="hero">
+        <!-- 3D Volumetric Clouds Stage (Dissolves outward as user scrolls down) -->
+        <div class="hero-clouds-3d" id="heroClouds3D" aria-hidden="true"></div>
+
         <div class="hero-content">
             <div class="hero-title-wrap">
                 <h1 class="hero-title">
@@ -99,8 +102,6 @@
                 </div>
             </div>
         </div>
-        <div class="letterbox letterbox--top"></div>
-        <div class="letterbox letterbox--bottom"></div>
     </section>
 
     <!-- ========== SELECTED WORKS ========== -->
@@ -116,7 +117,7 @@
                 <span class="heading-line"><span>Projects</span></span>
             </h2>
 
-            <!-- CATEGORY FILTER (Single Row — Illustration Removed) -->
+            <!-- CATEGORY FILTER (Single Row) -->
             <div class="works-filter" data-scroll-reveal>
                 <button class="filter-btn is-active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="cinematic">Cinematic & Film</button>
