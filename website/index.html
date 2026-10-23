@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anastasiia Pupyrina — Cinematographer & Motion Designer</title>
-    <meta name="description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, illustration, and photography.">
+    <meta name="description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -33,13 +33,26 @@
         <span class="cursor-text" id="cursorText">PLAY</span>
     </div>
 
-    <!-- ========== FLUID GRADIENT BACKGROUND ========== -->
-    <div class="fluid-bg" aria-hidden="true">
-        <div class="fluid-blob fluid-blob--1"></div>
-        <div class="fluid-blob fluid-blob--2"></div>
-        <div class="fluid-blob fluid-blob--3"></div>
-        <div class="fluid-blob fluid-blob--4"></div>
+    <!-- ========== SCROLL-DRIVEN DAY-TO-NIGHT BACKGROUND VIDEO ========== -->
+    <div class="sky-bg" aria-hidden="true">
+        <video class="sky-bg-video" id="bgDayVideo" muted playsinline preload="auto">
+            <source src="assets/BGvideo.mp4" type="video/mp4">
+        </video>
+        <div class="sky-bg-vignette"></div>
     </div>
+
+    <!-- ========== CINEMATIC TIMECODE SCROLLBAR ========== -->
+    <aside class="timecode-rail" id="timecodeRail" aria-hidden="true">
+        <span class="timecode-bound">00:00</span>
+        <div class="timecode-track">
+            <div class="timecode-progress" id="timecodeProgress"></div>
+            <div class="timecode-playhead" id="timecodePlayhead">
+                <span class="timecode-phase" id="timecodePhase">DAWN</span>
+                <span class="timecode-readout" id="timecodeReadout">00:00:00</span>
+            </div>
+        </div>
+        <span class="timecode-bound">23:59</span>
+    </aside>
 
     <!-- ========== NAVIGATION ========== -->
     <nav class="nav" id="nav">
@@ -82,7 +95,7 @@
                 <p class="hero-tagline" data-hero-reveal>Visual storytelling through<br>motion, 3D & video — Warsaw, Poland</p>
                 <div class="hero-scroll" data-hero-reveal>
                     <div class="hero-scroll-line"></div>
-                    <span>Scroll to explore</span>
+                    <span>Scroll through the day</span>
                 </div>
             </div>
         </div>
@@ -103,7 +116,7 @@
                 <span class="heading-line"><span>Projects</span></span>
             </h2>
 
-            <!-- CATEGORY FILTER (Single Row) -->
+            <!-- CATEGORY FILTER (Single Row — Illustration Removed) -->
             <div class="works-filter" data-scroll-reveal>
                 <button class="filter-btn is-active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="cinematic">Cinematic & Film</button>
@@ -111,7 +124,6 @@
                 <button class="filter-btn" data-filter="game">Game Design</button>
                 <button class="filter-btn" data-filter="3d">3D Art</button>
                 <button class="filter-btn" data-filter="ai">AI-Powered</button>
-                <button class="filter-btn" data-filter="illustration">Illustration</button>
                 <button class="filter-btn" data-filter="photography">Photography</button>
             </div>
         </div>
@@ -119,7 +131,7 @@
         <div class="works-grid container-wide">
 
             <!-- ════════════════════════════════════════
-                 AMELIE — Interactive Movie (SHOWCASE SIZE + AUTOPLAY)
+                 AMELIE — Interactive Movie (SHOWCASE SIZE + VIEWPORT AUTOPLAY)
                  YouTube: OBMF8K280dk
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide work-card--showcase" data-scroll-reveal-card data-category="cinematic">
@@ -186,7 +198,7 @@
             </article>
 
             <!-- ════════════════════════════════════════
-                 CABINET OF MEMORIES (MUSEUM OF ASIA) — SHOWCASE SIZE + AUTOPLAY RIGHT UNDER AMELIE
+                 CABINET OF MEMORIES (MUSEUM OF ASIA) — SHOWCASE SIZE + 22s LOOP
                  YouTube: _yAEpan9KDk
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide work-card--showcase" data-scroll-reveal-card data-category="motion">
@@ -197,7 +209,7 @@
                     <span class="frame-corner frame-corner--br"></span>
                 </div>
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="_yAEpan9KDk">
-                    <div class="work-card-media" data-showcase-yt="_yAEpan9KDk">
+                    <div class="work-card-media" data-showcase-yt="_yAEpan9KDk" data-preview-end="22">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/_yAEpan9KDk/maxresdefault.jpg" alt="Cabinet of Memories" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
@@ -302,7 +314,7 @@
 
             <!-- ════════════════════════════════════════
                  FRUTIGER AERO — DodekaOTTO (YouTube: SSdUnnOFxc4)
-                 AUTOPLAY + STRETCHED HORIZONTALLY TO FILL SCREEN
+                 VIEWPORT AUTOPLAY + STRETCHED HORIZONTALLY TO FILL SCREEN
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide work-card--showcase work-card--frutiger-cover" data-scroll-reveal-card data-category="motion 3d">
                 <div class="showreel-frame" aria-hidden="true">
@@ -335,27 +347,27 @@
             </article>
 
             <!-- ════════════════════════════════════════
-                 HORIZONTAL MOTION PAIR (SYGMA Content Edit + Paper Cut Animation)
+                 HORIZONTAL MOTION PAIR (SYGMA AI Literacy + Paper Cut Animation)
                  ════════════════════════════════════════ -->
-            <!-- SYGMA Content Edit: q9wFUekBM3w -->
-            <article class="work-card" data-scroll-reveal-card data-category="motion">
+            <!-- SYGMA — AI Literacy for Seniors: q9wFUekBM3w -->
+            <article class="work-card" data-scroll-reveal-card data-category="motion ai">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="q9wFUekBM3w">
                     <div class="work-card-media">
-                        <img class="work-card-img" src="https://i.ytimg.com/vi/q9wFUekBM3w/maxresdefault.jpg" alt="SYGMA — Content Edit" loading="lazy">
+                        <img class="work-card-img" src="https://i.ytimg.com/vi/q9wFUekBM3w/maxresdefault.jpg" alt="SYGMA — AI Literacy for Seniors" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
                     <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Social Media</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
-                        <h3 class="work-card-title">SYGMA — Content Edit</h3>
+                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Educational Web Platform</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
+                        <h3 class="work-card-title">SYGMA — AI Literacy for Seniors</h3>
                     </div>
                 </a>
                 <button class="work-card-info-btn" data-magnetic
-                    data-detail-title="SYGMA — Dynamic Content Edit"
-                    data-detail-category="Motion Design & Video Editing for Brands — 2025"
-                    data-detail-desc="A high-retention social media edit tailored for expert blogs and personal brands. The video features dynamic pacing, visual subtitles, cinematic color grading, and layered sound design to maximize viewer engagement."
-                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,Motion Graphics,Sound Design"
+                    data-detail-title="SYGMA — AI Literacy for Seniors"
+                    data-detail-category="Educational Web Platform & Motion Design — 2025"
+                    data-detail-desc="An educational website designed for young people to share with their grandparents — teaching seniors about artificial intelligence and how to differentiate AI-generated media from real footage through clear visual comparisons and interactive examples."
+                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,Motion Graphics,Web & UI Showcase,Sound Design"
                     data-detail-videos="https://www.youtube-nocookie.com/embed/q9wFUekBM3w"
-                    data-detail-video-labels="Content Edit">
+                    data-detail-video-labels="Website Walkthrough">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>Details</span>
                 </button>
@@ -385,8 +397,11 @@
                 </button>
             </article>
 
+            <!-- ════════════════════════════════════════
+                 HORIZONTAL PAIR (63 Seconds + Nature Photography)
+                 ════════════════════════════════════════ -->
             <!-- 63 Seconds: 4Z-Iuo2OkQM -->
-            <article class="work-card work-card--wide" data-scroll-reveal-card data-category="cinematic">
+            <article class="work-card" data-scroll-reveal-card data-category="cinematic">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="4Z-Iuo2OkQM">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/4Z-Iuo2OkQM/maxresdefault.jpg" alt="63 Seconds — Museum of Warsaw Uprising" loading="lazy">
@@ -395,7 +410,6 @@
                     <div class="work-card-content">
                         <div class="work-card-meta"><span class="work-card-category">Short Film / Competition</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
                         <h3 class="work-card-title">63 Seconds — Museum of Warsaw Uprising</h3>
-                        <p class="work-card-desc">A 63-second cinematic short film created for the Warsaw Rising Museum competition exploring human connections, memory, and historical resonance.</p>
                     </div>
                 </a>
                 <button class="work-card-info-btn" data-magnetic
@@ -410,8 +424,40 @@
                 </button>
             </article>
 
+            <!-- Nature Photography (Viewport-Only Smooth Slider) -->
+            <article class="work-card work-card--photo work-card--slider" data-scroll-reveal-card data-category="photography">
+                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
+                   data-image-src="assets/photography/IMG_4443.JPG"
+                   data-detail-title="Nature Photography"
+                   data-detail-category="Nature Photography & Visual Studies — 2025"
+                   data-detail-desc="A photography series focused on atmosphere and silence in nature. Using light and color theory, I aim to turn stillness into emotion, evoking feelings of tranquility, reminiscence, and yearning."
+                   data-detail-tools="Canon EOS 250D,Adobe Lightroom,Adobe Photoshop,Color Theory">
+                    <div class="work-card-media">
+                        <div class="work-card-slider-track">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_4443.JPG" alt="Nature Photography 1" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_0382.JPG" alt="Nature Photography 2" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_0390.JPG" alt="Nature Photography 3" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_0446.JPG" alt="Nature Photography 4" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_1743.JPG" alt="Nature Photography 5" loading="lazy" decoding="async">
+                        </div>
+                        <div class="work-card-slider-dots" aria-hidden="true">
+                            <span class="slider-dot is-active"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
+                        </div>
+                        <div class="work-card-overlay"></div>
+                    </div>
+                    <div class="work-card-content">
+                        <div class="work-card-meta"><span class="work-card-category">Nature Photography</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
+                        <h3 class="work-card-title">Nature Photography</h3>
+                    </div>
+                </a>
+            </article>
+
             <!-- ════════════════════════════════════════
-                 3D ART — 3D COQUETTE ROOM (Constant Sliding Gallery)
+                 3D ART — 3D COQUETTE ROOM (Viewport-Only Smooth Slider)
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide work-card--photo work-card--slider" data-scroll-reveal-card data-category="3d">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-view
@@ -422,10 +468,10 @@
                    data-detail-tools="Autodesk Maya,Nano Banana Pro,3D Environment Design,Lighting & Rendering">
                     <div class="work-card-media">
                         <div class="work-card-slider-track">
-                            <img class="work-card-slide-img" src="assets/room 3d/images3.jpg" alt="3D Coquette Room — Main View" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/room 3d/candles.jpg" alt="3D Coquette Room — Candelabra Detail" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/room 3d/IMG_9752.JPG" alt="3D Coquette Room — Vanity & Dressing Table" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/room 3d/bed2.jpg" alt="3D Coquette Room — Canopy Bed" loading="lazy">
+                            <img class="work-card-slide-img" src="assets/room 3d/images3.jpg" alt="3D Coquette Room — Main View" decoding="async">
+                            <img class="work-card-slide-img" src="assets/room 3d/candles.jpg" alt="3D Coquette Room — Candelabra Detail" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/room 3d/IMG_9752.JPG" alt="3D Coquette Room — Vanity & Dressing Table" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/room 3d/bed2.jpg" alt="3D Coquette Room — Canopy Bed" loading="lazy" decoding="async">
                         </div>
                         <div class="work-card-slider-dots" aria-hidden="true">
                             <span class="slider-dot is-active"></span>
@@ -489,58 +535,6 @@
                 </a>
             </article>
 
-            <!-- ════════════════════════════════════════
-                 ILLUSTRATION & NATURE PHOTOGRAPHY (Horizontal Pair)
-                 ════════════════════════════════════════ -->
-            <article class="work-card work-card--photo" data-scroll-reveal-card data-category="illustration">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
-                   data-image-src="assets/uba yuba illustration/final.jpg"
-                   data-detail-title="Shitonaga Uba meets Baba Yaga"
-                   data-detail-category="Digital Illustration / Comparative Folklore — 2025"
-                   data-detail-desc="A comparative folklore illustration uniting Japanese yōkai Shitonaga-uba and Slavic Baba Yaga. Composed along the Golden Spiral to guide the viewer's eye across both mythological worlds, and rendered in monochromatic values using the traditional grisaille technique in Procreate."
-                   data-detail-tools="Procreate,Adobe Photoshop,Adobe Lightroom,Adobe InDesign">
-                    <div class="work-card-media">
-                        <img class="work-card-img" src="assets/uba yuba illustration/final.jpg" alt="Shitonaga Uba meets Baba Yaga" loading="lazy">
-                        <div class="work-card-overlay"></div>
-                    </div>
-                    <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Digital Illustration / Folklore</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
-                        <h3 class="work-card-title">Shitonaga Uba meets Baba Yaga</h3>
-                    </div>
-                </a>
-            </article>
-
-            <article class="work-card work-card--photo work-card--slider" data-scroll-reveal-card data-category="photography">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
-                   data-image-src="assets/photography/IMG_4443.JPG"
-                   data-detail-title="Nature Photography"
-                   data-detail-category="Nature Photography & Visual Studies — 2025"
-                   data-detail-desc="A photography series focused on atmosphere and silence in nature. Using light and color theory, I aim to turn stillness into emotion, evoking feelings of tranquility, reminiscence, and yearning."
-                   data-detail-tools="Canon EOS 250D,Adobe Lightroom,Adobe Photoshop,Color Theory">
-                    <div class="work-card-media">
-                        <div class="work-card-slider-track">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_4443.JPG" alt="Nature Photography 1" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0382.JPG" alt="Nature Photography 2" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0390.JPG" alt="Nature Photography 3" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0446.JPG" alt="Nature Photography 4" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_1743.JPG" alt="Nature Photography 5" loading="lazy">
-                        </div>
-                        <div class="work-card-slider-dots" aria-hidden="true">
-                            <span class="slider-dot is-active"></span>
-                            <span class="slider-dot"></span>
-                            <span class="slider-dot"></span>
-                            <span class="slider-dot"></span>
-                            <span class="slider-dot"></span>
-                        </div>
-                        <div class="work-card-overlay"></div>
-                    </div>
-                    <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Nature Photography</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
-                        <h3 class="work-card-title">Nature Photography</h3>
-                    </div>
-                </a>
-            </article>
-
             <!-- Invisible Full-Width Row Break so Vertical Cards NEVER sit next to Horizontal Cards -->
             <div class="works-grid-break" aria-hidden="true"></div>
 
@@ -548,22 +542,22 @@
                  VERTICAL ROW 1 (3 Vertical Projects Side-by-Side)
                  SYGMA: QQB1Wzcy1Tg | English Tutor: QLPmFjoWMt8 | Intro: 34cj_rteBO4
                  ════════════════════════════════════════ -->
-            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion">
+            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion ai">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="QQB1Wzcy1Tg">
                     <div class="work-card-media">
-                        <img class="work-card-img" src="assets/SYGMA/Screenshot 2026-10-23 003546.png" alt="SYGMA — TikTok Promo" loading="lazy">
+                        <img class="work-card-img" src="assets/SYGMA/Screenshot 2026-10-23 003546.png" alt="SYGMA — AI Literacy Promo" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
                     <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Brand Promo</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
-                        <h3 class="work-card-title">SYGMA — TikTok Promo</h3>
+                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Social Campaign</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
+                        <h3 class="work-card-title">SYGMA — AI Literacy (TikTok Promo)</h3>
                     </div>
                 </a>
                 <button class="work-card-info-btn" data-magnetic
-                    data-detail-title="SYGMA — Brand & Website Promotion"
-                    data-detail-category="Motion Design & Video Editing for Brands — 2025"
-                    data-detail-desc="A dynamic promotional video for the SYGMA brand and website. The edit combines fast-paced cutting, animated headshots, 3D space compositions, and kinetic typography to deliver an engaging social media experience."
-                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,3D Camera Tracker,Sound Design & SFX"
+                    data-detail-title="SYGMA — AI Literacy for Seniors (TikTok Promo)"
+                    data-detail-category="Motion Design & Educational Social Campaign — 2025"
+                    data-detail-desc="A fast-paced TikTok promotional reel for the SYGMA platform, encouraging young people to show the website to their grandparents and teach them how to distinguish AI-generated videos from real footage."
+                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,3D Camera Tracker,Kinetic Typography,Sound Design"
                     data-detail-videos="https://www.youtube-nocookie.com/embed/QQB1Wzcy1Tg"
                     data-detail-video-labels="TikTok Website Promo">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -667,7 +661,7 @@
                 </button>
             </article>
 
-            <!-- Portrait Photography (Vertical + Constant Sliding Gallery + Full Bleed Cover) -->
+            <!-- Portrait Photography (Vertical + Centered + Viewport-Only Smooth Slider) -->
             <article class="work-card work-card--vertical work-card--photo work-card--slider" data-scroll-reveal-card data-category="photography">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-view
                    data-image-src="assets/photography/people/IMG_7351-3.jpg"
@@ -677,13 +671,13 @@
                    data-detail-tools="Canon EOS 250D,Adobe Photoshop,Adobe Lightroom,Portrait Retouching">
                     <div class="work-card-media">
                         <div class="work-card-slider-track">
-                            <img class="work-card-slide-img" src="assets/photography/people/IMG_7351-3.jpg" alt="Portrait Photography 1" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5073.jpg" alt="Portrait Photography 2" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5022_smooth.jpg" alt="Portrait Photography 3" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5050.jpg" alt="Portrait Photography 4" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5075.jpg" alt="Portrait Photography 5" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8165.jpg" alt="Portrait Photography 6" loading="lazy">
-                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8738-2 (1).jpg" alt="Portrait Photography 7" loading="lazy">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_7351-3.jpg" alt="Portrait Photography 1" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5073.jpg" alt="Portrait Photography 2" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5022_smooth.jpg" alt="Portrait Photography 3" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5050.jpg" alt="Portrait Photography 4" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5075.jpg" alt="Portrait Photography 5" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8165.jpg" alt="Portrait Photography 6" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8738-2 (1).jpg" alt="Portrait Photography 7" loading="lazy" decoding="async">
                         </div>
                         <div class="work-card-slider-dots" aria-hidden="true">
                             <span class="slider-dot is-active"></span>
@@ -804,7 +798,7 @@
         </div>
     </section>
 
-    <!-- ========== ABOUT SECTION (LOCAL MP4 LIVING PORTRAIT — NO YOUTUBE UI) ========== -->
+    <!-- ========== ABOUT SECTION (HEADLINE -> VIDEO -> BIO ON MOBILE, SIDE-BY-SIDE ON DESKTOP) ========== -->
     <section class="about" id="about">
         <div class="container">
             <div class="section-label" data-scroll-reveal>
@@ -813,14 +807,30 @@
                 <span class="section-label-text">About</span>
             </div>
             <div class="about-grid">
+                <h2 class="about-heading" data-scroll-reveal>
+                    <span class="heading-line"><span>Creating stories</span></span>
+                    <span class="heading-line"><span>through motion</span></span>
+                </h2>
+
+                <div class="about-visual-col" data-scroll-reveal>
+                    <div class="about-image">
+                        <div class="about-image-inner" id="aboutVideoContainer">
+                            <video class="about-intro-video" id="aboutIntroVideo" muted loop playsinline preload="metadata" poster="assets/Screenshot 2026-10-23 003356.png">
+                                <source src="assets/introduction.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="about-image-frame"></div>
+                    </div>
+                    <button class="about-unmute-btn" id="aboutUnmuteBtn" type="button" data-magnetic>
+                        <span class="about-unmute-icon" id="aboutUnmuteIcon">🔊</span>
+                        <span class="about-unmute-text" id="aboutUnmuteText">Click to Unmute &amp; Listen</span>
+                    </button>
+                </div>
+
                 <div class="about-text-col">
-                    <h2 class="about-heading" data-scroll-reveal>
-                        <span class="heading-line"><span>Creating stories</span></span>
-                        <span class="heading-line"><span>through motion</span></span>
-                    </h2>
                     <div class="about-body" data-scroll-reveal>
                         <p>I am Anastasiia Pupyrina, a Warsaw-based motion designer and cinematographer currently studying Multimedia and Graphic Design at the Polish-Japanese Academy of Information Technology (PJATK).</p>
-                        <p>My practice spans cinematic video, 3D animation, motion design, game prototyping, digital illustration, and AI-powered content creation. As a FLEX Program alumna and a content creator with nearly 1 million TikTok likes, I explore cultural differences, language learning, and design, while sharing my personal reflections on emotions and human relationships.</p>
+                        <p>My practice spans cinematic video, 3D animation, motion design, game prototyping, and AI-powered content creation. As a FLEX Program alumna and a content creator with nearly 1 million TikTok likes, I explore cultural differences, language learning, and design, while sharing my personal reflections on emotions and human relationships.</p>
                         <p>I thrive in collaborative, international environments. My cross-cultural projects range from producing a promotional broadcast for a US high school to designing an immersive spatial experience for the DodekaOTTO exhibition in St. Pölten, Austria, during my Erasmus exchange.</p>
                     </div>
                     <div class="about-tools" data-scroll-reveal>
@@ -870,20 +880,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="about-visual-col" data-scroll-reveal>
-                    <div class="about-image">
-                        <div class="about-image-inner" id="aboutVideoContainer">
-                            <video class="about-intro-video" id="aboutIntroVideo" autoplay muted loop playsinline preload="auto" poster="assets/Screenshot 2026-10-23 003356.png">
-                                <source src="assets/introduction.mp4" type="video/mp4">
-                            </video>
-                        </div>
-                        <div class="about-image-frame"></div>
-                    </div>
-                    <button class="about-unmute-btn" id="aboutUnmuteBtn" type="button" data-magnetic>
-                        <span class="about-unmute-icon" id="aboutUnmuteIcon">🔊</span>
-                        <span class="about-unmute-text" id="aboutUnmuteText">Click to Unmute &amp; Listen</span>
-                    </button>
-                </div>
             </div>
         </div>
     </section>
@@ -896,7 +892,6 @@
             <span class="marquee-item">VISUAL STORYTELLING&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
             <span class="marquee-item">GAME DESIGN&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
             <span class="marquee-item">AI CONTENT&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
-            <span class="marquee-item">ILLUSTRATION&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
             <span class="marquee-item">PHOTOGRAPHY&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
             <span class="marquee-item">CINEMATOGRAPHY&nbsp;&nbsp;✦&nbsp;&nbsp;</span>
             <span class="marquee-item">MOTION DESIGN&nbsp;&nbsp;✦&nbsp;&nbsp;</span>

@@ -50,7 +50,6 @@
           img.src = currentSrc.replace('maxresdefault.jpg', 'hqdefault.jpg');
         }
       } else if (step === 1) {
-        // If placed directly in assets/ instead of a project subfolder, try assets/<filename>
         img.dataset.fallbackStep = '2';
         const parts = currentSrc.split('/');
         const fileName = parts[parts.length - 1];
@@ -70,7 +69,7 @@
 
     let current = 0;
     const target = 100;
-    const duration = 1600;
+    const duration = 1400;
     const start = performance.now();
 
     function tick(now) {
@@ -87,7 +86,7 @@
         preloader.classList.add('is-done');
         gsap.to(preloader, {
           opacity: 0,
-          duration: 0.6,
+          duration: 0.55,
           ease: 'power2.inOut',
           onComplete() {
             preloader.style.display = 'none';
@@ -126,7 +125,90 @@
     }, '-=0.4');
   }
 
-  // ─── 3. LETTERBOX ─────────────────────────────────────────
+  // ─── 3. SCROLL-DRIVEN DAY-TO-NIGHT BG VIDEO & TIMECODE ────
+  function initDayNightScrollExperience() {
+    const bgVideo    = qs('#bgDayVideo');
+    const progressEl = qs('#timecodeProgress');
+    const playheadEl = qs('#timecodePlayhead');
+    const readoutEl  = qs('#timecodeReadout');
+    const phaseEl    = qs('#timecodePhase');
+
+    let videoDuration = 8.0;
+    let targetProgress = 0;
+    let smoothProgress = 0;
+
+    if (bgVideo) {
+      bgVideo.addEventListener('loadedmetadata', function () {
+        if (bgVideo.duration && isFinite(bgVideo.duration)) {
+          videoDuration = bgVideo.duration;
+        }
+      });
+
+      // Prime first frame for mobile & desktop browsers
+      const primePromise = bgVideo.play();
+      if (primePromise && typeof primePromise.then === 'function') {
+        primePromise.then(function () {
+          bgVideo.pause();
+          bgVideo.currentTime = 0;
+        }).catch(function () {});
+      }
+    }
+
+    function computeScrollProgress() {
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      targetProgress = clamp(window.scrollY / maxScroll, 0, 1);
+    }
+
+    window.addEventListener('scroll', computeScrollProgress, { passive: true });
+    window.addEventListener('resize', computeScrollProgress, { passive: true });
+    computeScrollProgress();
+
+    function formatTimecode(progress) {
+      const totalSecondsInDay = 86399; // 23:59:59
+      const currentSeconds = Math.floor(progress * totalSecondsInDay);
+      const hrs  = Math.floor(currentSeconds / 3600);
+      const mins = Math.floor((currentSeconds % 3600) / 60);
+      const secs = currentSeconds % 60;
+      const pad = n => (n < 10 ? '0' + n : String(n));
+      return pad(hrs) + ':' + pad(mins) + ':' + pad(secs);
+    }
+
+    function getDayPhase(progress) {
+      if (progress < 0.16) return 'DAWN';
+      if (progress < 0.36) return 'MORNING';
+      if (progress < 0.58) return 'HIGH NOON';
+      if (progress < 0.78) return 'GOLDEN HOUR';
+      if (progress < 0.90) return 'DUSK';
+      return 'MIDNIGHT';
+    }
+
+    function tickDayNight() {
+      smoothProgress = lerp(smoothProgress, targetProgress, 0.12);
+
+      // Update Timecode UI
+      const pct = (smoothProgress * 100).toFixed(2) + '%';
+      if (progressEl) progressEl.style.height = pct;
+      if (playheadEl) playheadEl.style.top = pct;
+      if (readoutEl)  readoutEl.textContent = formatTimecode(smoothProgress);
+      if (phaseEl)    phaseEl.textContent = getDayPhase(smoothProgress);
+
+      // Non-blocking video frame scrub (waits for previous seek to finish so browser never lags)
+      if (bgVideo && bgVideo.readyState >= 2 && !bgVideo.seeking) {
+        const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
+        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
+          try {
+            bgVideo.currentTime = desiredTime;
+          } catch (e) {}
+        }
+      }
+
+      requestAnimationFrame(tickDayNight);
+    }
+
+    requestAnimationFrame(tickDayNight);
+  }
+
+  // ─── 4. LETTERBOX ─────────────────────────────────────────
   function initLetterbox() {
     const hero = qs('.hero');
     if (!hero) return;
@@ -145,7 +227,7 @@
     });
   }
 
-  // ─── 4. CUSTOM CURSOR ─────────────────────────────────────
+  // ─── 5. CUSTOM CURSOR ─────────────────────────────────────
   function initCursor() {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const cursor = qs('.cursor');
@@ -176,7 +258,7 @@
     function moveCursor() {
       cursorX = lerp(cursorX, mouseX, 0.15);
       cursorY = lerp(cursorY, mouseY, 0.15);
-      cursor.style.transform = 'translate(' + cursorX + 'px, ' + cursorY + 'px)';
+      cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0)';
       requestAnimationFrame(moveCursor);
     }
     requestAnimationFrame(moveCursor);
@@ -216,7 +298,7 @@
     });
   }
 
-  // ─── 5. MAGNETIC BUTTONS ──────────────────────────────────
+  // ─── 6. MAGNETIC BUTTONS ──────────────────────────────────
   function initMagneticButtons() {
     const magnets = qsa('[data-magnetic]');
 
@@ -248,7 +330,7 @@
     });
   }
 
-  // ─── 6. NAVIGATION ────────────────────────────────────────
+  // ─── 7. NAVIGATION ────────────────────────────────────────
   function initNavigation() {
     const nav = qs('.nav');
     if (!nav) return;
@@ -283,7 +365,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
-  // ─── 7. MOBILE MENU ───────────────────────────────────────
+  // ─── 8. MOBILE MENU ───────────────────────────────────────
   function initMobileMenu() {
     const menuBtn    = qs('#menuBtn');
     const mobileMenu = qs('#mobileMenu');
@@ -303,7 +385,7 @@
     });
   }
 
-  // ─── 8. SCROLL REVEAL ─────────────────────────────────────
+  // ─── 9. SCROLL REVEAL ─────────────────────────────────────
   function initScrollReveal() {
     const revealEls = qsa('[data-scroll-reveal]');
     revealEls.forEach(function (el) {
@@ -347,25 +429,70 @@
     });
   }
 
-  // ─── 9. VIDEO CARDS & DYNAMIC HOVER / SHOWCASE AUTOPLAY ───
+  // ─── 10. VIEWPORT-ONLY SHOWCASE AUTOPLAY & HOVER PREVIEWS ──
   function initVideoHover() {
     qsa('.work-card-img').forEach(attachImageFallback);
 
-    // Embed continuous autoplay video for Showcase cards (Amelie, Cabinet of Memories, Frutiger Aero)
+    // 10A. Showcase cards (Amelie, Cabinet of Memories, Frutiger Aero):
+    // Mount & play ONLY when visible in the viewport; unload when scrolled out of view
     const showcaseMedias = qsa('[data-showcase-yt]');
-    showcaseMedias.forEach(function (showcaseMedia) {
-      const ytId = showcaseMedia.getAttribute('data-showcase-yt');
-      const isVerticalCover = showcaseMedia.getAttribute('data-showcase-vertical-cover') === 'true';
-      const iframe = document.createElement('iframe');
-      iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
-      iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160`;
-      iframe.setAttribute('allow', 'autoplay; encrypted-media');
-      iframe.setAttribute('frameborder', '0');
-      requestHighestYouTubeQuality(iframe);
-      showcaseMedia.appendChild(iframe);
-    });
 
-    // Dynamic Hover Preview for other video cards
+    if ('IntersectionObserver' in window) {
+      const showcaseObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          const media = entry.target;
+          const ytId = media.getAttribute('data-showcase-yt');
+          const isVerticalCover = media.getAttribute('data-showcase-vertical-cover') === 'true';
+          const endSec = parseInt(media.getAttribute('data-preview-end') || '0', 10);
+
+          if (entry.isIntersecting) {
+            if (!qs('.work-card-preview-iframe', media)) {
+              const iframe = document.createElement('iframe');
+              iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
+              const endParam = endSec > 0 ? `&end=${endSec}` : '';
+              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160${endParam}`;
+              iframe.setAttribute('allow', 'autoplay; encrypted-media');
+              iframe.setAttribute('frameborder', '0');
+              requestHighestYouTubeQuality(iframe);
+              media.appendChild(iframe);
+
+              // If a custom loop cutoff is set (e.g., 22s for Cabinet of Memories), seek back to 0:00 before credits
+              if (endSec > 0) {
+                media._loopTimer = setInterval(function () {
+                  try {
+                    if (iframe.contentWindow) {
+                      iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'seekTo',
+                        args: [0, true]
+                      }), '*');
+                      iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'playVideo',
+                        args: ''
+                      }), '*');
+                    }
+                  } catch (e) {}
+                }, endSec * 1000);
+              }
+            }
+          } else {
+            if (media._loopTimer) {
+              clearInterval(media._loopTimer);
+              media._loopTimer = null;
+            }
+            const existing = qs('.work-card-preview-iframe', media);
+            if (existing) existing.remove();
+          }
+        });
+      }, { threshold: 0.22, rootMargin: '80px 0px' });
+
+      showcaseMedias.forEach(function (m) {
+        showcaseObserver.observe(m);
+      });
+    }
+
+    // 10B. Dynamic Hover Preview for non-showcase video cards
     const videoLinks = qsa('.work-card-link[data-yt-id]');
 
     videoLinks.forEach(function (link) {
@@ -376,8 +503,6 @@
       let hoverTimeout = null;
 
       if (!card || !media || !ytId) return;
-
-      // Skip hover injection on showcase cards that already autoplay continuously
       if (media.hasAttribute('data-showcase-yt')) return;
 
       card.addEventListener('mouseenter', function () {
@@ -390,7 +515,7 @@
           iframe.setAttribute('frameborder', '0');
           requestHighestYouTubeQuality(iframe);
           media.appendChild(iframe);
-        }, 260);
+        }, 280);
       });
 
       card.addEventListener('mouseleave', function () {
@@ -401,13 +526,13 @@
     });
   }
 
-  // ─── 9B. CONSTANT IMAGE SLIDERS (3D Room, Portrait, Nature) ───
+  // ─── 10C. VIEWPORT-ONLY GPU-ACCELERATED IMAGE SLIDERS ─────
   function initConstantSliders() {
     qsa('.work-card-img, .work-card-slide-img').forEach(attachImageFallback);
 
     const sliderCards = qsa('.work-card--slider');
 
-    sliderCards.forEach(function (card, cardIdx) {
+    sliderCards.forEach(function (card) {
       const track  = qs('.work-card-slider-track', card);
       const slides = qsa('.work-card-slide-img', card);
       const dots   = qsa('.slider-dot', card);
@@ -415,10 +540,11 @@
       if (!track || slides.length < 2) return;
 
       let currentIndex = 0;
+      let sliderTimer = null;
 
       function goToSlide(index) {
         currentIndex = ((index % slides.length) + slides.length) % slides.length;
-        track.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+        track.style.transform = 'translate3d(-' + (currentIndex * 100) + '%, 0, 0)';
         dots.forEach(function (dot, i) {
           dot.classList.toggle('is-active', i === currentIndex);
         });
@@ -428,17 +554,44 @@
         }
       }
 
+      function startSlider() {
+        if (sliderTimer) return;
+        // Pre-decode images in this card before sliding
+        slides.forEach(function (img) {
+          if (img.loading === 'lazy') img.loading = 'eager';
+        });
+        sliderTimer = setInterval(function () {
+          goToSlide(currentIndex + 1);
+        }, 2800);
+      }
+
+      function stopSlider() {
+        if (sliderTimer) {
+          clearInterval(sliderTimer);
+          sliderTimer = null;
+        }
+      }
+
       card.dataset.activeSlideIndex = '0';
 
-      setTimeout(function () {
-        setInterval(function () {
-          goToSlide(currentIndex + 1);
-        }, 2500);
-      }, cardIdx * 400);
+      if ('IntersectionObserver' in window) {
+        const obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              startSlider();
+            } else {
+              stopSlider();
+            }
+          });
+        }, { threshold: 0.25 });
+        obs.observe(card);
+      } else {
+        startSlider();
+      }
     });
   }
 
-  // ─── 10. ABOUT SECTION LOCAL MP4 LIVING PORTRAIT UNMUTE ───
+  // ─── 11. ABOUT SECTION VIDEO (PLAYS ONLY WHEN IN VIEWPORT) ─
   function initAboutIntroVideo() {
     const unmuteBtn = qs('#aboutUnmuteBtn');
     const iconEl    = qs('#aboutUnmuteIcon');
@@ -446,7 +599,19 @@
     const video     = qs('#aboutIntroVideo');
     if (!unmuteBtn || !video) return;
 
-    video.play().catch(function () {});
+    // Only play the About video when the user scrolls down to the About section
+    if ('IntersectionObserver' in window) {
+      const aboutObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            video.play().catch(function () {});
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.25 });
+      aboutObs.observe(video);
+    }
 
     unmuteBtn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -468,7 +633,7 @@
     });
   }
 
-  // ─── 11. VIDEO MODAL (FULLSCREEN YOUTUBE PLAYER IN MAX QUALITY) ───
+  // ─── 12. VIDEO MODAL (FULLSCREEN YOUTUBE PLAYER IN MAX QUALITY) ───
   function initVideoModal() {
     const modal       = qs('#videoModal');
     if (!modal) return;
@@ -529,7 +694,7 @@
     });
   }
 
-  // ─── 12. IMAGE MODAL WITH PREV/NEXT GALLERY & FULL-SIZE ZOOM ───
+  // ─── 13. IMAGE MODAL WITH PREV/NEXT GALLERY & FULL-SIZE ZOOM ───
   function initImageModal() {
     const modal       = qs('#imageModal');
     if (!modal) return;
@@ -705,7 +870,7 @@
     });
   }
 
-  // ─── 13. PROJECT DETAIL PANEL (DRAWER) ────────────────────
+  // ─── 14. PROJECT DETAIL PANEL (DRAWER) ────────────────────
   function initProjectDetail() {
     const panel          = qs('#projectDetail');
     if (!panel) return;
@@ -853,7 +1018,7 @@
     });
   }
 
-  // ─── 14. CATEGORY FILTER (KEEPS HORIZONTALS & VERTICALS SEPARATED) ─
+  // ─── 15. CATEGORY FILTER (KEEPS HORIZONTALS & VERTICALS SEPARATED) ─
   function initCategoryFilter() {
     const filterBtns = qsa('.filter-btn');
     const grid       = qs('.works-grid');
@@ -897,7 +1062,7 @@
     });
   }
 
-  // ─── 15. SMOOTH SCROLL ANCHORS ────────────────────────────
+  // ─── 16. SMOOTH SCROLL ANCHORS ────────────────────────────
   function initSmoothScroll() {
     const links = qsa('a[href^="#"]');
 
@@ -920,7 +1085,7 @@
     });
   }
 
-  // ─── 16. BACK TO TOP ──────────────────────────────────────
+  // ─── 17. BACK TO TOP ──────────────────────────────────────
   function initBackToTop() {
     const btn = qs('#backToTop');
     if (!btn) return;
@@ -934,7 +1099,7 @@
     });
   }
 
-  // ─── 17. MARQUEE SPEED ────────────────────────────────────
+  // ─── 18. MARQUEE SPEED ────────────────────────────────────
   function initMarqueeSpeed() {
     const tracks = qsa('.marquee-track');
     if (!tracks.length) return;
@@ -973,6 +1138,7 @@
     gsap.registerPlugin(ScrollTrigger);
 
     initPreloader();
+    initDayNightScrollExperience();
     initLetterbox();
     initCursor();
     initMagneticButtons();
