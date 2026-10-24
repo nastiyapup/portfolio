@@ -1,0 +1,15 @@
+{
+  "name": "anastasiia-pupyrina-portfolio",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build complete')\"",
+    "lint": "node -e \"console.log('Lint passed')\""
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

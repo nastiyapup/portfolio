@@ -123,7 +123,13 @@
     tl.to('.hero-line-inner', {
       y: '0%',
       duration: 1.1,
-      stagger: 0.1
+      stagger: 0.1,
+      onComplete: function () {
+        // Release overflow after entrance animation to prevent clipping of text shadows / outlines
+        qsa('.hero-line').forEach(function (el) {
+          el.style.overflow = 'visible';
+        });
+      }
     })
     .to('.hero-role', {
       opacity: 1,
@@ -149,28 +155,47 @@
     const playheadEl = qs('#timecodePlayhead');
     const readoutEl  = qs('#timecodeReadout');
     const phaseEl    = qs('#timecodePhase');
+    const railEl     = qs('#timecodeRail');
+    const trackEl    = qs('#timecodeTrack');
 
     let videoDuration = 8.0;
     let targetProgress = 0;
     let smoothProgress = 0;
+    let isDraggingTrack = false;
 
     if (bgVideo) {
-      bgVideo.addEventListener('loadedmetadata', function () {
+      bgVideo.muted = true;
+      bgVideo.setAttribute('playsinline', '');
+      bgVideo.setAttribute('webkit-playsinline', '');
+
+      const onVideoReady = function () {
         if (bgVideo.duration && isFinite(bgVideo.duration)) {
           videoDuration = bgVideo.duration;
         }
-      });
+        // Prime first frame so background immediately renders
+        try {
+          if (bgVideo.currentTime === 0) {
+            bgVideo.currentTime = 0.05;
+          }
+        } catch (e) {}
+      };
+
+      bgVideo.addEventListener('loadedmetadata', onVideoReady);
+      bgVideo.addEventListener('canplay', onVideoReady);
+      if (bgVideo.readyState >= 1) {
+        onVideoReady();
+      }
 
       const primePromise = bgVideo.play();
       if (primePromise && typeof primePromise.then === 'function') {
         primePromise.then(function () {
           bgVideo.pause();
-          bgVideo.currentTime = 0;
         }).catch(function () {});
       }
     }
 
     function computeScrollProgress() {
+      if (isDraggingTrack) return;
       const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       targetProgress = clamp(window.scrollY / maxScroll, 0, 1);
     }
@@ -178,6 +203,58 @@
     window.addEventListener('scroll', computeScrollProgress, { passive: true });
     window.addEventListener('resize', computeScrollProgress, { passive: true });
     computeScrollProgress();
+
+    // ── Interactive Scrub & Drag on the Timecode Rail ──
+    function scrubToEvent(e) {
+      if (!trackEl) return;
+      const rect = trackEl.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const clientY = (e.clientY != null) ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      const ratio = clamp((clientY - rect.top) / rect.height, 0, 1);
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      const targetY = ratio * maxScroll;
+
+      targetProgress = ratio;
+      if (isDraggingTrack) {
+        window.scrollTo(0, targetY);
+      } else {
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+      }
+    }
+
+    if (trackEl && railEl) {
+      trackEl.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        isDraggingTrack = true;
+        try {
+          trackEl.setPointerCapture(e.pointerId);
+        } catch (err) {}
+        railEl.classList.add('is-dragging');
+        document.body.classList.add('is-scrubbing');
+        scrubToEvent(e);
+      });
+
+      trackEl.addEventListener('pointermove', function (e) {
+        if (!isDraggingTrack) return;
+        scrubToEvent(e);
+      });
+
+      const onPointerEnd = function (e) {
+        if (!isDraggingTrack) return;
+        isDraggingTrack = false;
+        try {
+          if (e && e.pointerId != null) {
+            trackEl.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
+        railEl.classList.remove('is-dragging');
+        document.body.classList.remove('is-scrubbing');
+      };
+
+      trackEl.addEventListener('pointerup', onPointerEnd);
+      trackEl.addEventListener('pointercancel', onPointerEnd);
+      window.addEventListener('pointerup', onPointerEnd);
+    }
 
     function formatTimecode(progress) {
       const totalSecondsInDay = 86399; // 23:59:59
@@ -199,7 +276,7 @@
     }
 
     function tickDayNight() {
-      smoothProgress = lerp(smoothProgress, targetProgress, 0.12);
+      smoothProgress = isDraggingTrack ? targetProgress : lerp(smoothProgress, targetProgress, 0.14);
 
       const pct = (smoothProgress * 100).toFixed(2) + '%';
       if (progressEl) progressEl.style.height = pct;
@@ -207,11 +284,15 @@
       if (readoutEl)  readoutEl.textContent = formatTimecode(smoothProgress);
       if (phaseEl)    phaseEl.textContent = getDayPhase(smoothProgress);
 
-      if (bgVideo && bgVideo.readyState >= 2 && !bgVideo.seeking) {
+      if (bgVideo && bgVideo.readyState >= 1 && !bgVideo.seeking) {
         const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
-        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
+        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.02) {
           try {
-            bgVideo.currentTime = desiredTime;
+            if (typeof bgVideo.fastSeek === 'function') {
+              bgVideo.fastSeek(desiredTime);
+            } else {
+              bgVideo.currentTime = desiredTime;
+            }
           } catch (e) {}
         }
       }
@@ -307,6 +388,18 @@
       });
       el.addEventListener('mouseleave', function () {
         cursor.classList.remove('is-view');
+        if (cursorText) cursorText.textContent = '';
+      });
+    });
+
+    const scrubTargets = qsa('#timecodeRail, #timecodeTrack, #timecodePlayhead');
+    scrubTargets.forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        cursor.classList.add('is-scrub');
+        if (cursorText) cursorText.textContent = 'DRAG';
+      });
+      el.addEventListener('mouseleave', function () {
+        cursor.classList.remove('is-scrub');
         if (cursorText) cursorText.textContent = '';
       });
     });
