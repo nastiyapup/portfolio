@@ -85,14 +85,14 @@ ul, ol { list-style: none; }
 /* Compact containers leaving generous open sky corridors (~24% total side sky space) */
 .container {
     width: 100%;
-    max-width: min(900px, 76vw);
+    max-width: min(1040px, 82vw);
     margin: 0 auto;
     padding: 0 var(--pad-sm);
 }
 
 .container-wide {
     width: 100%;
-    max-width: min(980px, 76vw);
+    max-width: min(1150px, 84vw);
     margin: 0 auto;
     padding: 0 var(--pad-sm);
     transition: max-width 0.55s var(--ease-out-expo);
@@ -119,6 +119,14 @@ ul, ol { list-style: none; }
     transform: translateZ(0);
     will-change: contents;
     filter: saturate(1.1) contrast(1.02) brightness(1.03);
+}
+
+.sky-bg-video--desktop {
+    display: block;
+}
+
+.sky-bg-video--mobile {
+    display: none;
 }
 
 /* Subtle 3D cloud mist corridor that drifts outward as you fly forward */
@@ -1248,7 +1256,7 @@ body.is-scrubbing * {
 /* 6-Column Compact Sky-Flight Grid (980px max-width) */
 .works-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     column-gap: 22px;
     row-gap: 38px;
     align-items: start;
@@ -1268,7 +1276,7 @@ body.is-scrubbing * {
    WORK CARDS — LUMINOUS SKY MIST & COMPACT SCALE
    ============================================== */
 .work-card {
-    grid-column: span 3;
+    grid-column: span 6;
     position: relative;
     width: 100%;
     border-radius: var(--radius);
@@ -1295,6 +1303,9 @@ body.is-scrubbing * {
 }
 
 .work-card--wide {
+    grid-column: span 12;
+}
+.unused-override {
     grid-column: span 6;
 }
 
@@ -1307,15 +1318,15 @@ body.is-scrubbing * {
 }
 
 .work-card--vertical.is-row-single-vertical {
-    grid-column: 3 / span 2;
+    grid-column: 5 / span 4;
 }
 
 .work-card--vertical.is-row-pair-vertical-first {
-    grid-column: 2 / span 2;
+    grid-column: 4 / span 3;
 }
 
 .work-card--vertical.is-row-pair-vertical-second {
-    grid-column: 4 / span 2;
+    grid-column: 7 / span 3;
 }
 
 /* Showcase Cards (Amelie, Cabinet of Memories, Frutiger Aero) — Full-Bleed Centered */
@@ -1326,7 +1337,8 @@ body.is-scrubbing * {
 
 /* Vertical 9:16 Cards (3 per row, sleek compact height so sky remains visible) */
 .work-card--vertical {
-    grid-column: span 2;
+    grid-column: span 3;
+
 }
 
 .work-card-link {
@@ -1416,11 +1428,11 @@ body.is-scrubbing * {
 .work-card--frutiger-cover .work-card-img {
     object-fit: cover;
     object-position: center center;
-    transform: scale(1.04);
+    transform: scale(1.36);
     transform-origin: center center;
 }
 
-.work-card--frutiger-cover:hover .work-card-img {
+.work-card--frutiger-cover:hover .work-card-img { transform: scale(1.44); } .work-card--frutiger-legacy {
     transform: scale(1.08);
 }
 
@@ -1434,7 +1446,7 @@ body.is-scrubbing * {
     height: auto;
     min-width: 100%;
     min-height: 100%;
-    transform: translate(-50%, -50%) scale(1.26);
+    transform: translate(-50%, -50%) scale(1.48);
     transform-origin: center center;
     border: none;
     z-index: 2;
@@ -1443,7 +1455,7 @@ body.is-scrubbing * {
 }
 
 .work-card:hover .work-card-preview-iframe {
-    transform: translate(-50%, -50%) scale(1.31);
+    transform: translate(-50%, -50%) scale(1.54);
 }
 
 .work-card--vertical .work-card-preview-iframe {
@@ -1452,11 +1464,11 @@ body.is-scrubbing * {
     aspect-ratio: 16 / 9;
     min-width: 100%;
     min-height: 100%;
-    transform: translate(-50%, -50%) scale(1.18);
+    transform: translate(-50%, -50%) scale(1.68);
 }
 
 .work-card--vertical:hover .work-card-preview-iframe {
-    transform: translate(-50%, -50%) scale(1.24);
+    transform: translate(-50%, -50%) scale(1.74);
 }
 
 .work-card-preview-iframe--vertical-cover {
@@ -1467,12 +1479,12 @@ body.is-scrubbing * {
     height: auto;
     min-width: 100%;
     min-height: 100%;
-    transform: translate(-50%, -50%) scale(1.34);
+    transform: translate(-50%, -50%) scale(1.56);
     transform-origin: center center;
 }
 
 .work-card:hover .work-card-preview-iframe--vertical-cover {
-    transform: translate(-50%, -50%) scale(1.40);
+    transform: translate(-50%, -50%) scale(1.62);
 }
 
 /* GPU-Accelerated Sliding Image Gallery */
@@ -1666,7 +1678,7 @@ body.is-scrubbing * {
    SIMPLIFIED HR QUICK-GRID VIEW MODE (.is-grid-view)
    ============================================== */
 .works.is-grid-view .container-wide {
-    max-width: min(1140px, 86vw);
+    max-width: min(1150px, 84vw);
 }
 
 .works.is-grid-view .works-grid {
@@ -2544,7 +2556,7 @@ body.is-scrubbing * {
    MARQUEE (ETHEREAL SKY RIBBON)
    ============================================== */
 .marquee {
-    padding: 48px 0;
+    padding: 24px 0;
     overflow: hidden;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -2558,7 +2570,7 @@ body.is-scrubbing * {
 .marquee-track {
     display: flex;
     white-space: nowrap;
-    animation: marquee-scroll 24s linear infinite;
+    animation: marquee-scroll 12s linear infinite;
 }
 
 .marquee-item {
@@ -2785,7 +2797,7 @@ body.is-scrubbing * {
     .work-card,
     .work-card--wide,
     .work-card.is-row-single-horizontal {
-        grid-column: span 2;
+    
         width: 100%;
     }
 
@@ -2833,6 +2845,14 @@ body.is-scrubbing * {
 @media (max-width: 768px) {
     :root {
         --nav-height: 64px;
+    }
+
+    .sky-bg-video--desktop {
+        display: none !important;
+    }
+
+    .sky-bg-video--mobile {
+        display: block !important;
     }
 
     .container,

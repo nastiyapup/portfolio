@@ -166,7 +166,8 @@
 
   // ─── 3. SCROLL-DRIVEN DAY-TO-NIGHT BG VIDEO, SKY PALETTE & TIMECODE ────
   function initDayNightScrollExperience() {
-    const bgVideo    = qs('#bgDayVideo');
+    const bgVideo       = qs('#bgDayVideo');
+    const bgMobileVideo = qs('#bgMobileVideo');
     const progressEl = qs('#timecodeProgress');
     const playheadEl = qs('#timecodePlayhead');
     const readoutEl  = qs('#timecodeReadout');
@@ -179,6 +180,7 @@
     let targetProgress = 0;
     let smoothProgress = 0;
     let isDraggingTrack = false;
+    var hasUserScrolled = false;
 
     // 6-phase Sky Color Keyframes matching BGvideo.mp4 progression
     const SKY_STOPS = [
@@ -273,7 +275,31 @@
       rootStyle.setProperty('--sky-halo', `rgba(${Math.round(hlo[0])}, ${Math.round(hlo[1])}, ${Math.round(hlo[2])}, ${hlo[3].toFixed(3)})`);
     }
 
-    if (bgVideo) {
+    [bgVideo, bgMobileVideo].filter(Boolean).forEach(function (v) {
+      v.muted = true;
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+
+      const onVReady = function () {
+        if (v.duration && isFinite(v.duration)) {
+          videoDuration = v.duration;
+        }
+        try {
+          if (v.currentTime === 0) {
+            v.pause();
+          }
+        } catch (e) {}
+      };
+
+      v.addEventListener('loadedmetadata', onVReady);
+      v.addEventListener('canplay', onVReady);
+      if (v.readyState >= 1) {
+        onVReady();
+      }
+      try { v.pause(); } catch (e) {}
+    });
+
+    if (false && bgVideo) {
       bgVideo.muted = true;
       bgVideo.setAttribute('playsinline', '');
       bgVideo.setAttribute('webkit-playsinline', '');
@@ -284,7 +310,7 @@
         }
         try {
           if (bgVideo.currentTime === 0) {
-            bgVideo.currentTime = 0.05;
+            bgVideo.pause();
           }
         } catch (e) {}
       };
@@ -295,7 +321,7 @@
         onVideoReady();
       }
 
-      const primePromise = bgVideo.play();
+      const primePromise = null; try { bgVideo.pause(); } catch (e) {}
       if (primePromise && typeof primePromise.then === 'function') {
         primePromise.then(function () {
           bgVideo.pause();
@@ -304,6 +330,7 @@
     }
 
     function computeScrollProgress() {
+      if (window.scrollY > 2) hasUserScrolled = true;
       if (isDraggingTrack) return;
       const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       targetProgress = clamp(window.scrollY / maxScroll, 0, 1);
@@ -384,6 +411,7 @@
       return 'MIDNIGHT';
     }
 
+    var hasUserScrolled = false;
     let lastPaletteProgress = -1;
 
     function tickDayNight() {
@@ -400,9 +428,24 @@
         lastPaletteProgress = smoothProgress;
       }
 
-      if (bgVideo && bgVideo.readyState >= 1 && !bgVideo.seeking) {
+      [bgVideo, bgMobileVideo].filter(Boolean).forEach(function (v) {
+        if (v.readyState >= 1 && !v.seeking) {
+          const vDur = (v.duration && isFinite(v.duration)) ? v.duration : videoDuration;
+          const desiredTime = clamp(smoothProgress * vDur, 0, Math.max(vDur - 0.05, 0));
+          if ((hasUserScrolled || isDraggingTrack || smoothProgress > 0.005) && Math.abs(v.currentTime - desiredTime) > 0.03) {
+            try {
+              if (typeof v.fastSeek === 'function') {
+                v.fastSeek(desiredTime);
+              } else {
+                v.currentTime = desiredTime;
+              }
+            } catch (e) {}
+          }
+        }
+      });
+      if (false && bgVideo && bgVideo.readyState >= 1 && !bgVideo.seeking) {
         const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
-        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.02) {
+        if ((hasUserScrolled || isDraggingTrack || smoothProgress > 0.005) && Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
           try {
             if (typeof bgVideo.fastSeek === 'function') {
               bgVideo.fastSeek(desiredTime);
@@ -916,7 +959,7 @@
               const iframe = document.createElement('iframe');
               iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
               const endParam = endSec > 0 ? `&end=${endSec}` : '';
-              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&cc_load_policy=0&iv_load_policy=3&vq=hd2160${endParam}`;
+              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&cc_load_policy=0&iv_load_policy=3&vq=hd2160${endParam}`;
               iframe.setAttribute('allow', 'autoplay; encrypted-media');
               iframe.setAttribute('frameborder', '0');
               requestHighestYouTubeQuality(iframe, true);
@@ -974,7 +1017,7 @@
           if (qs('.work-card-preview-iframe', media)) return;
           const iframe = document.createElement('iframe');
           iframe.className = 'work-card-preview-iframe';
-          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&cc_load_policy=0&iv_load_policy=3&vq=hd2160&start=${startSec}`;
+          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&cc_load_policy=0&iv_load_policy=3&vq=hd2160&start=${startSec}`;
           iframe.setAttribute('allow', 'autoplay; encrypted-media');
           iframe.setAttribute('frameborder', '0');
           requestHighestYouTubeQuality(iframe, true);
@@ -990,6 +1033,22 @@
     });
   }
 
+    /* video loop listener
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (data && data.event === 'onStateChange' && data.info === 0) {
+          qsa('.work-card-preview-iframe').forEach(function (iframe) {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*');
+              iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+            }
+          });
+        }
+      } catch (err) {}
+    });
+  }
+
+  */
   // ─── 10B. VIEWPORT-ONLY GPU-ACCELERATED IMAGE SLIDERS ─────
   function initConstantSliders() {
     qsa('.work-card-img, .work-card-slide-img').forEach(attachImageFallback);
@@ -1614,7 +1673,7 @@
       const visibleVerticals = visibleCards.filter(function (c) {
         return c.classList.contains('work-card--vertical');
       });
-      const rem = visibleVerticals.length % 3;
+      const rem = visibleVerticals.length % 4;
       if (rem === 1) {
         visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-single-vertical');
       } else if (rem === 2) {
@@ -1651,12 +1710,12 @@
           if (filter === 'all') {
             card.style.order = '';
           } else {
-            card.style.order = card.classList.contains('work-card--vertical') ? '3' : '1';
+            card.style.order = '';
           }
         });
 
         if (gridBreak) {
-          gridBreak.style.order = filter === 'all' ? '' : '2';
+          gridBreak.style.order = '';
         }
 
         updateGridRowCentering();
@@ -1765,7 +1824,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
 
     function updateMarquee() {
-      const rate = clamp(1.3 + scrollVelocity * 0.012, 1.3, 2.2);
+      const rate = clamp(1.6 + scrollVelocity * 0.018, 1.6, 3.2);
       scrollVelocity *= 0.9;
 
       tracks.forEach(function (track) {
