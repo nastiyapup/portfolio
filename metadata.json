@@ -1,0 +1,8 @@
+{
+  "name": "Anastasiia Pupyrina Portfolio",
+  "description": "Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

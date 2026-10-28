@@ -1,13 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+      // Compatibility shim for browser extensions attempting to assign window.fetch
+      (function() {
+        try {
+          var curFetch = window.fetch;
+          var getFetch = function() { return curFetch; };
+          var setFetch = function(fn) { curFetch = fn; };
+
+          try {
+            Object.defineProperty(window, 'fetch', {
+              configurable: true,
+              enumerable: true,
+              get: getFetch,
+              set: setFetch
+            });
+          } catch (e) {}
+
+          try {
+            if (typeof Window !== 'undefined' && Window.prototype) {
+              Object.defineProperty(Window.prototype, 'fetch', {
+                configurable: true,
+                enumerable: true,
+                get: getFetch,
+                set: setFetch
+              });
+            }
+          } catch (e) {}
+        } catch (e) {}
+      })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anastasiia Pupyrina — Cinematographer & Motion Designer</title>
     <meta name="description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
+    <meta property="og:title" content="Anastasiia Pupyrina — Cinematographer & Motion Designer">
+    <meta property="og:description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -35,9 +67,10 @@
 
     <!-- ========== SCROLL-DRIVEN DAY-TO-NIGHT BACKGROUND VIDEO ========== -->
     <div class="sky-bg" aria-hidden="true">
-        <video class="sky-bg-video" id="bgDayVideo" muted playsinline preload="auto">
+        <video class="sky-bg-video" id="bgDayVideo" muted playsinline webkit-playsinline preload="auto">
             <source src="assets/BGvideo.mp4" type="video/mp4">
         </video>
+        <div class="sky-cloud-tunnel" id="skyCloudTunnel"></div>
         <div class="sky-bg-vignette" id="skyBgVignette"></div>
     </div>
 
@@ -86,19 +119,19 @@
         <!-- 3D Volumetric Clouds Stage (Dissolves outward as user scrolls down) -->
         <div class="hero-clouds-3d" id="heroClouds3D" aria-hidden="true"></div>
 
-        <div class="hero-content">
+        <div class="hero-content" id="heroFlightStage">
             <div class="hero-title-wrap">
                 <h1 class="hero-title">
                     <span class="hero-line" data-hero-reveal><span class="hero-line-inner">ANASTASIIA</span></span>
-                    <span class="hero-line hero-line--outline" data-hero-reveal><span class="hero-line-inner">PUPYRINA</span></span>
+                    <span class="hero-line hero-line--outline" data-hero-reveal><span class="hero-line-inner"><em>Pupyrina</em></span></span>
                 </h1>
-                <p class="hero-role" data-hero-reveal>Cinematographer & Motion Designer</p>
+                <p class="hero-role" data-hero-reveal>Cinematographer <em class="serif-italic">&amp;</em> Motion Designer</p>
             </div>
             <div class="hero-bottom">
-                <p class="hero-tagline" data-hero-reveal>Visual storytelling through<br>motion, 3D & video — Warsaw, Poland</p>
+                <p class="hero-tagline" data-hero-reveal>Visual storytelling through<br><em class="serif-italic">motion, 3D &amp; video</em> — Warsaw, Poland</p>
                 <div class="hero-scroll" data-hero-reveal>
                     <div class="hero-scroll-line"></div>
-                    <span>Scroll through the day</span>
+                    <span>Fly through the day</span>
                 </div>
             </div>
         </div>
@@ -112,24 +145,55 @@
                 <span class="section-label-line"></span>
                 <span class="section-label-text">Selected Works</span>
             </div>
-            <h2 class="works-heading" data-scroll-reveal>
-                <span class="heading-line"><span>Featured</span></span>
-                <span class="heading-line"><span>Projects</span></span>
-            </h2>
+            <div class="works-header-row">
+                <h2 class="works-heading" data-scroll-reveal>
+                    <span class="heading-line"><span><em class="serif-italic">Featured</em></span></span>
+                    <span class="heading-line"><span>Projects</span></span>
+                </h2>
+                <p class="works-flight-hint" data-scroll-reveal>
+                    Scroll to fly through the sky &nbsp;·&nbsp; or switch to <button type="button" class="inline-grid-trigger" id="inlineGridTrigger">Quick Grid</button> for rapid HR scanning
+                </p>
+            </div>
 
-            <!-- CATEGORY FILTER (Single Row) -->
-            <div class="works-filter" data-scroll-reveal>
-                <button class="filter-btn is-active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="cinematic">Cinematic & Film</button>
-                <button class="filter-btn" data-filter="motion">Motion Design</button>
-                <button class="filter-btn" data-filter="game">Game Design</button>
-                <button class="filter-btn" data-filter="3d">3D Art</button>
-                <button class="filter-btn" data-filter="ai">AI-Powered</button>
-                <button class="filter-btn" data-filter="photography">Photography</button>
+            <!-- HR ORIENTATION COMMAND BAR: CATEGORIES + VIEW MODE SWITCHER -->
+            <div class="works-command-bar" id="worksCommandBar" data-scroll-reveal>
+                <div class="works-filter" role="tablist" aria-label="Filter projects by discipline">
+                    <button class="filter-btn is-active" data-filter="all" role="tab" aria-selected="true">All</button>
+                    <button class="filter-btn" data-filter="cinematic" role="tab" aria-selected="false">Cinematic &amp; Film</button>
+                    <button class="filter-btn" data-filter="motion" role="tab" aria-selected="false">Motion Design</button>
+                    <button class="filter-btn" data-filter="game" role="tab" aria-selected="false">Game Design</button>
+                    <button class="filter-btn" data-filter="3d" role="tab" aria-selected="false">3D Art</button>
+                    <button class="filter-btn" data-filter="ai" role="tab" aria-selected="false">AI-Powered</button>
+                    <button class="filter-btn" data-filter="photography" role="tab" aria-selected="false">Photography</button>
+                </div>
+
+                <div class="works-view-switcher" role="group" aria-label="Switch portfolio layout mode">
+                    <button type="button" class="view-mode-btn is-active" data-view-mode="flight" aria-pressed="true" title="Immersive 3D Sky Flight View">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z"/></svg>
+                        <span>Sky Flight</span>
+                    </button>
+                    <button type="button" class="view-mode-btn" data-view-mode="grid" aria-pressed="false" title="Simplified Grid View for HR &amp; Recruiters">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span>Quick Grid</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- DYNAMIC CATEGORY SKILL & SOFTWARE COMPETENCY BANNER (FOR HR QUICK SCAN) -->
+            <div class="category-skill-banner" id="categorySkillBanner" data-scroll-reveal>
+                <div class="category-skill-group">
+                    <span class="category-skill-label">Discipline Focus</span>
+                    <span class="category-skill-value" id="categorySkillFocus">Full-Stack Visual Storytelling · Cinematography, 2D/3D Motion, Game Art &amp; AI Workflows</span>
+                </div>
+                <span class="category-skill-sep" aria-hidden="true">·</span>
+                <div class="category-skill-group">
+                    <span class="category-skill-label">Key Software</span>
+                    <span class="category-skill-value" id="categorySkillTools">After Effects, DaVinci Resolve, Premiere Pro, Cinema 4D, Blender, Autodesk Maya, Unity, Photoshop</span>
+                </div>
             </div>
         </div>
 
-        <div class="works-grid container-wide">
+        <div class="works-grid container-wide" id="worksGrid">
 
             <!-- ════════════════════════════════════════
                  AMELIE — Interactive Movie (SHOWCASE SIZE + VIEWPORT AUTOPLAY)
@@ -351,22 +415,22 @@
                  HORIZONTAL MOTION PAIR (SYGMA AI Literacy + Paper Cut Animation)
                  ════════════════════════════════════════ -->
             <!-- SYGMA — AI Literacy for Seniors: q9wFUekBM3w -->
-            <article class="work-card" data-scroll-reveal-card data-category="motion ai">
+            <article class="work-card" data-scroll-reveal-card data-category="ai">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="q9wFUekBM3w">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/q9wFUekBM3w/maxresdefault.jpg" alt="SYGMA — AI Literacy for Seniors" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
                     <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Educational Web Platform</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
+                        <div class="work-card-meta"><span class="work-card-category">Educational AI Web Platform</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
                         <h3 class="work-card-title">SYGMA — AI Literacy for Seniors</h3>
                     </div>
                 </a>
                 <button class="work-card-info-btn" data-magnetic
                     data-detail-title="SYGMA — AI Literacy for Seniors"
-                    data-detail-category="Educational Web Platform & Motion Design — 2025"
+                    data-detail-category="Educational AI Web Platform — 2025"
                     data-detail-desc="An educational website designed for young people to share with their grandparents — teaching seniors about artificial intelligence and how to differentiate AI-generated media from real footage through clear visual comparisons and interactive examples."
-                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,Motion Graphics,Web & UI Showcase,Sound Design"
+                    data-detail-tools="Adobe Premiere Pro,Adobe After Effects,AI Media Literacy,Web & UI Showcase,Sound Design"
                     data-detail-videos="https://www.youtube-nocookie.com/embed/q9wFUekBM3w"
                     data-detail-video-labels="Website Walkthrough">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -435,14 +499,20 @@
                    data-detail-tools="Canon EOS 250D,Adobe Lightroom,Adobe Photoshop,Color Theory">
                     <div class="work-card-media">
                         <div class="work-card-slider-track">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_4443.JPG" alt="Nature Photography 1" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0382.JPG" alt="Nature Photography 2" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0390.JPG" alt="Nature Photography 3" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_0446.JPG" alt="Nature Photography 4" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/IMG_1743.JPG" alt="Nature Photography 5" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_4443.JPG" alt="Nature Photography — Autumn Forest Gazebo" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_0382.JPG" alt="Nature Photography — Baltic Beach & Coast" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_0446.JPG" alt="Nature Photography — Sunset Ocean Walk" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_1743.JPG" alt="Nature Photography — Dramatic Coastal Cliffs" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_3397.JPG" alt="Nature Photography — Atmospheric Landscape" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_3999.JPG" alt="Nature Photography — Natural Light Study" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_7077-2.jpg" alt="Nature Photography — Winter Sunset Horizon" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/IMG_8894.JPG" alt="Nature Photography — Sunlit Botanical Garden" loading="lazy" decoding="async">
                         </div>
                         <div class="work-card-slider-dots" aria-hidden="true">
                             <span class="slider-dot is-active"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
@@ -543,20 +613,20 @@
                  VERTICAL ROW 1 (3 Vertical Projects Side-by-Side)
                  SYGMA: QQB1Wzcy1Tg | English Tutor: QLPmFjoWMt8 | Intro: 34cj_rteBO4
                  ════════════════════════════════════════ -->
-            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion ai">
+            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="ai">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="QQB1Wzcy1Tg">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/SYGMA/Screenshot 2026-10-23 003546.png" alt="SYGMA — AI Literacy Promo" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
                     <div class="work-card-content">
-                        <div class="work-card-meta"><span class="work-card-category">Motion Design / Social Campaign</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
+                        <div class="work-card-meta"><span class="work-card-category">AI Literacy / Social Campaign</span><span class="work-card-divider">—</span><span class="work-card-year">2025</span></div>
                         <h3 class="work-card-title">SYGMA — AI Literacy (TikTok Promo)</h3>
                     </div>
                 </a>
                 <button class="work-card-info-btn" data-magnetic
                     data-detail-title="SYGMA — AI Literacy for Seniors (TikTok Promo)"
-                    data-detail-category="Motion Design & Educational Social Campaign — 2025"
+                    data-detail-category="AI Literacy & Educational Social Campaign — 2025"
                     data-detail-desc="A fast-paced TikTok promotional reel for the SYGMA platform, encouraging young people to show the website to their grandparents and teach them how to distinguish AI-generated videos from real footage."
                     data-detail-tools="Adobe Premiere Pro,Adobe After Effects,3D Camera Tracker,Kinetic Typography,Sound Design"
                     data-detail-videos="https://www.youtube-nocookie.com/embed/QQB1Wzcy1Tg"
@@ -589,7 +659,7 @@
                 </button>
             </article>
 
-            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion cinematic">
+            <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion">
                 <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="34cj_rteBO4">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/Screenshot 2026-10-23 003356.png" alt="What If Your Choice Changes the Ending?" loading="lazy">
@@ -673,15 +743,19 @@
                     <div class="work-card-media">
                         <div class="work-card-slider-track">
                             <img class="work-card-slide-img" src="assets/photography/people/IMG_7351-3.jpg" alt="Portrait Photography 1" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5073.jpg" alt="Portrait Photography 2" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5022_smooth.jpg" alt="Portrait Photography 3" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5050.jpg" alt="Portrait Photography 4" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5075.jpg" alt="Portrait Photography 5" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8165.jpg" alt="Portrait Photography 6" loading="lazy" decoding="async">
-                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8738-2 (1).jpg" alt="Portrait Photography 7" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5050.jpg" alt="Portrait Photography 2" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5073.jpg" alt="Portrait Photography 3" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5022_smooth.jpg" alt="Portrait Photography 4" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5032_smooth.jpg" alt="Portrait Photography 5" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/olivia/IMG_5085_smooth.jpg" alt="Portrait Photography 6" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_5341.jpg" alt="Portrait Photography 7" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8165.jpg" alt="Portrait Photography 8" loading="lazy" decoding="async">
+                            <img class="work-card-slide-img" src="assets/photography/people/IMG_8738-2 (1).jpg" alt="Portrait Photography 9" loading="lazy" decoding="async">
                         </div>
                         <div class="work-card-slider-dots" aria-hidden="true">
                             <span class="slider-dot is-active"></span>
+                            <span class="slider-dot"></span>
+                            <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
                             <span class="slider-dot"></span>
@@ -787,7 +861,7 @@
                 </div>
                 <div class="cert-card" data-scroll-reveal-card>
                     <a href="assets/201IH24016138-28-12-2024-ETRF.pdf" target="_blank" rel="noopener" class="cert-card-pdf-wrap" data-cursor-view>
-                        <embed class="cert-card-img cert-card-pdf" src="assets/201IH24016138-28-12-2024-ETRF.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH" type="application/pdf">
+                        <img class="cert-card-img" src="assets/ielts_certificate.jpg" alt="IELTS Academic C1 Certificate (Overall Band 7.5) — Anastasiia Pupyrina" loading="lazy">
                         <span class="cert-card-pdf-badge">View Official Certificate PDF ↗</span>
                     </a>
                     <div class="cert-card-info">
@@ -809,7 +883,7 @@
             </div>
             <div class="about-grid">
                 <h2 class="about-heading" data-scroll-reveal>
-                    <span class="heading-line"><span>Creating stories</span></span>
+                    <span class="heading-line"><span>Creating <em class="serif-italic">stories</em></span></span>
                     <span class="heading-line"><span>through motion</span></span>
                 </h2>
 
@@ -913,7 +987,7 @@
             <div class="contact-content">
                 <h2 class="contact-heading" data-scroll-reveal>
                     <span class="heading-line"><span>Let's create</span></span>
-                    <span class="heading-line"><span>something</span></span>
+                    <span class="heading-line"><span><em class="serif-italic">something</em></span></span>
                     <span class="heading-line"><span>together</span></span>
                 </h2>
                 <a href="mailto:nastiyapup@gmail.com" class="contact-email" data-scroll-reveal data-magnetic>

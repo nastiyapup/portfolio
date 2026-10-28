@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" width="1200" height="1600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faf9f5"/>
+      <stop offset="50%" stop-color="#f5f2ea"/>
+      <stop offset="100%" stop-color="#ebe6da"/>
+    </linearGradient>
+    <pattern id="guilloche" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 0 20 Q 10 0 20 20 T 40 20" fill="none" stroke="#e0d9ca" stroke-width="0.75" opacity="0.6"/>
+      <path d="M 0 20 Q 10 40 20 20 T 40 20" fill="none" stroke="#e0d9ca" stroke-width="0.75" opacity="0.6"/>
+    </pattern>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#1a1528" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Document Background -->
+  <rect x="0" y="0" width="1200" height="1600" fill="url(#bgGrad)"/>
+  <rect x="25" y="25" width="1150" height="1550" fill="none" stroke="#c41230" stroke-width="3"/>
+  <rect x="35" y="35" width="1130" height="1530" fill="none" stroke="#1d2538" stroke-width="1.2"/>
+  <rect x="42" y="42" width="1116" height="1516" fill="url(#guilloche)" opacity="0.85"/>
+
+  <!-- Top Header Bar -->
+  <g transform="translate(60, 65)">
+    <!-- IELTS Logo -->
+    <rect x="0" y="0" width="220" height="74" rx="6" fill="#c41230"/>
+    <text x="110" y="54" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="4">IELTS</text>
+    
+    <!-- Partner Logos Text -->
+    <text x="1080" y="28" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="16" fill="#1d2538" text-anchor="end">BRITISH COUNCIL &#160;·&#160; IDP: IELTS AUSTRALIA</text>
+    <text x="1080" y="52" font-family="Arial, Helvetica, sans-serif" font-weight="normal" font-size="14" fill="#5a6275" text-anchor="end">CAMBRIDGE UNIVERSITY PRESS &amp; ASSESSMENT</text>
+  </g>
+
+  <!-- Title Section -->
+  <g transform="translate(600, 185)" text-anchor="middle">
+    <text y="0" font-family="'Times New Roman', Times, serif" font-size="34" font-weight="bold" fill="#111827" letter-spacing="1">Test Report Form</text>
+    <rect x="-140" y="16" width="280" height="32" rx="4" fill="#1d2538"/>
+    <text y="38" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" fill="#ffffff" letter-spacing="3">ACADEMIC</text>
+    <text y="74" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#4b5563">NOTE: Admission to undergraduate and postgraduate courses should be based on the ACADEMIC Reading and Writing Modules.</text>
+  </g>
+
+  <!-- Candidate Details Table Box -->
+  <g transform="translate(70, 290)">
+    <rect x="0" y="0" width="1060" height="280" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="4" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="1060" height="38" fill="#f1f5f9" rx="4 4 0 0"/>
+    <text x="20" y="25" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#334155" letter-spacing="1">CANDIDATE DETAILS</text>
+
+    <!-- Photo Placeholder / Candidate Avatar Box -->
+    <rect x="880" y="54" width="160" height="206" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2" rx="4"/>
+    <clipPath id="photoClip">
+      <rect x="880" y="54" width="160" height="206" rx="4"/>
+    </clipPath>
+    <image href="data:image/jpeg;base64,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" x="880" y="54" width="160" height="206" preserveAspectRatio="xMidYMid slice" clip-path="url(#photoClip)"/>
+    <rect x="880" y="54" width="160" height="206" fill="none" stroke="#cbd5e1" stroke-width="1.2" rx="4"/>
+
+    <!-- Details Grid -->
+    <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#64748b">
+      <!-- Family Name -->
+      <text x="30" y="70" font-weight="bold">Family Name</text>
+      <rect x="30" y="80" width="380" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="45" y="104" font-size="16" font-weight="bold" fill="#0f172a">PUPYRINA</text>
+
+      <!-- First Name -->
+      <text x="440" y="70" font-weight="bold">First Name(s)</text>
+      <rect x="440" y="80" width="410" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="455" y="104" font-size="16" font-weight="bold" fill="#0f172a">ANASTASIIA</text>
+
+      <!-- Candidate ID -->
+      <text x="30" y="142" font-weight="bold">Candidate ID Number</text>
+      <rect x="30" y="152" width="380" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="45" y="176" font-size="15" font-family="'Courier New', Courier, monospace" font-weight="bold" fill="#c41230">201IH24016138</text>
+
+      <!-- Date of Test -->
+      <text x="440" y="142" font-weight="bold">Date of Test</text>
+      <rect x="440" y="152" width="200" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="455" y="176" font-size="15" font-weight="bold" fill="#0f172a">28 / 12 / 2024</text>
+
+      <!-- Candidate Number -->
+      <text x="660" y="142" font-weight="bold">Candidate No.</text>
+      <rect x="660" y="152" width="190" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="675" y="176" font-size="15" font-weight="bold" fill="#0f172a">016138</text>
+
+      <!-- Centre / Country -->
+      <text x="30" y="214" font-weight="bold">Country or Region of Origin</text>
+      <rect x="30" y="224" width="380" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="45" y="248" font-size="14" font-weight="bold" fill="#0f172a">Ukraine</text>
+
+      <text x="440" y="214" font-weight="bold">First Language</text>
+      <rect x="440" y="224" width="410" height="36" fill="#f8fafc" stroke="#e2e8f0"/>
+      <text x="455" y="248" font-size="14" font-weight="bold" fill="#0f172a">Ukrainian</text>
+    </g>
+  </g>
+
+  <!-- Test Results Main Badge & Grid -->
+  <g transform="translate(70, 605)">
+    <rect x="0" y="0" width="1060" height="420" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="4" filter="url(#shadow)"/>
+    <rect x="0" y="0" width="1060" height="42" fill="#1d2538" rx="4 4 0 0"/>
+    <text x="20" y="28" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#ffffff" letter-spacing="1">TEST RESULTS &amp; BAND SCORES</text>
+
+    <!-- Scores 4 Individual Columns -->
+    <g transform="translate(40, 70)">
+      <!-- Listening -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="150" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+        <text x="110" y="36" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#475569" text-anchor="middle">Listening</text>
+        <line x1="20" y1="52" x2="200" y2="52" stroke="#e2e8f0"/>
+        <text x="110" y="115" font-family="'Times New Roman', Times, serif" font-size="54" font-weight="bold" fill="#0f172a" text-anchor="middle">8.5</text>
+        <text x="110" y="138" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#16a34a" text-anchor="middle" font-weight="bold">C2 PROFICIENT</text>
+      </g>
+
+      <!-- Reading -->
+      <g transform="translate(250, 0)">
+        <rect x="0" y="0" width="220" height="150" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+        <text x="110" y="36" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#475569" text-anchor="middle">Reading</text>
+        <line x1="20" y1="52" x2="200" y2="52" stroke="#e2e8f0"/>
+        <text x="110" y="115" font-family="'Times New Roman', Times, serif" font-size="54" font-weight="bold" fill="#0f172a" text-anchor="middle">8.0</text>
+        <text x="110" y="138" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#16a34a" text-anchor="middle" font-weight="bold">C1 ADVANCED</text>
+      </g>
+
+      <!-- Writing -->
+      <g transform="translate(500, 0)">
+        <rect x="0" y="0" width="220" height="150" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+        <text x="110" y="36" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#475569" text-anchor="middle">Writing</text>
+        <line x1="20" y1="52" x2="200" y2="52" stroke="#e2e8f0"/>
+        <text x="110" y="115" font-family="'Times New Roman', Times, serif" font-size="54" font-weight="bold" fill="#0f172a" text-anchor="middle">6.5</text>
+        <text x="110" y="138" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#2563eb" text-anchor="middle" font-weight="bold">B2 COMPETENT</text>
+      </g>
+
+      <!-- Speaking -->
+      <g transform="translate(750, 0)">
+        <rect x="0" y="0" width="220" height="150" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+        <text x="110" y="36" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#475569" text-anchor="middle">Speaking</text>
+        <line x1="20" y1="52" x2="200" y2="52" stroke="#e2e8f0"/>
+        <text x="110" y="115" font-family="'Times New Roman', Times, serif" font-size="54" font-weight="bold" fill="#0f172a" text-anchor="middle">7.5</text>
+        <text x="110" y="138" font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#16a34a" text-anchor="middle" font-weight="bold">C1 ADVANCED</text>
+      </g>
+    </g>
+
+    <!-- Overall Band Score Banner -->
+    <g transform="translate(40, 250)">
+      <rect x="0" y="0" width="970" height="140" rx="8" fill="#fef2f2" stroke="#fecaca" stroke-width="2"/>
+      
+      <g transform="translate(50, 0)">
+        <text x="0" y="55" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" fill="#991b1b" letter-spacing="1">OVERALL BAND SCORE</text>
+        <text x="0" y="90" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#64748b">Good User — Operational command of language with occasional inaccuracies.</text>
+        <text x="0" y="112" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#b91c1c">Certified Academic English · Valid for Higher Education Worldwide</text>
+      </g>
+
+      <!-- Giant Overall 7.5 -->
+      <rect x="680" y="20" width="120" height="100" rx="8" fill="#c41230"/>
+      <text x="740" y="90" font-family="'Times New Roman', Times, serif" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">7.5</text>
+
+      <!-- CEFR Level C1 -->
+      <rect x="820" y="20" width="110" height="100" rx="8" fill="#1d2538"/>
+      <text x="875" y="55" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" text-anchor="middle">CEFR</text>
+      <text x="875" y="95" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="bold" fill="#ffffff" text-anchor="middle">C1</text>
+    </g>
+  </g>
+
+  <!-- Validation, Stamps & Signatures Footer -->
+  <g transform="translate(70, 1055)">
+    <rect x="0" y="0" width="1060" height="420" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5" rx="4" filter="url(#shadow)"/>
+    
+    <g transform="translate(40, 35)">
+      <!-- Official Stamp -->
+      <g transform="translate(60, 110)">
+        <circle cx="90" cy="90" r="85" fill="none" stroke="#c41230" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.85"/>
+        <circle cx="90" cy="90" r="76" fill="none" stroke="#c41230" stroke-width="1" opacity="0.85"/>
+        <text x="90" y="55" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" fill="#c41230" text-anchor="middle" letter-spacing="2">IELTS TEST CENTRE</text>
+        <text x="90" y="85" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="900" fill="#c41230" text-anchor="middle">WARSAW, PL</text>
+        <text x="90" y="108" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#c41230" text-anchor="middle">28 DEC 2024</text>
+        <text x="90" y="132" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" fill="#c41230" text-anchor="middle" letter-spacing="1">VERIFIED OFFICIAL</text>
+      </g>
+
+      <!-- Signatures & Verification Details -->
+      <g transform="translate(340, 20)" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#334155">
+        <text x="0" y="20" font-weight="bold">Administrator's Signature:</text>
+        <path d="M 0 65 Q 40 45 80 70 T 160 55 T 240 75" fill="none" stroke="#1e293b" stroke-width="2"/>
+        <line x1="0" y1="80" x2="300" y2="80" stroke="#cbd5e1"/>
+
+        <text x="350" y="20" font-weight="bold">Centre Stamp:</text>
+        <path d="M 350 65 Q 390 40 440 65 T 520 60" fill="none" stroke="#1e293b" stroke-width="2"/>
+        <line x1="350" y1="80" x2="620" y2="80" stroke="#cbd5e1"/>
+
+        <text x="0" y="140" font-weight="bold">Validation Stamp Date:</text>
+        <text x="180" y="140" font-family="'Courier New', Courier, monospace" font-weight="bold" fill="#0f172a">28 / 12 / 2024</text>
+
+        <text x="0" y="180" font-weight="bold">Test Report Form (eTRF) Number:</text>
+        <rect x="0" y="195" width="460" height="38" rx="4" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="15" y="221" font-family="'Courier New', Courier, monospace" font-size="16" font-weight="bold" fill="#c41230">24PL016138PUPA201A</text>
+        
+        <text x="0" y="270" font-size="11" fill="#64748b" width="600">The validity of this IELTS Test Report Form can be verified online by recognising organisations at</text>
+        <text x="0" y="288" font-size="11" font-weight="bold" fill="#0284c7">https://ielts.ucles.org.uk/ielts-trf/</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Bottom Security Ribbon -->
+  <rect x="25" y="1530" width="1150" height="45" fill="#1d2538"/>
+  <text x="600" y="1558" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="2">CAMBRIDGE ENGLISH LANGUAGE ASSESSMENT &#160;·&#160; IDP IELTS &#160;·&#160; BRITISH COUNCIL</text>
+</svg>

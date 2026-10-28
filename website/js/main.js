@@ -9,8 +9,8 @@
   const hasGSAP = () => typeof window.gsap !== 'undefined';
   const hasScrollTrigger = () => typeof window.ScrollTrigger !== 'undefined';
 
-  // Request highest available YouTube resolution (4K / 2K / 1080p) via IFrame postMessage API
-  function requestHighestYouTubeQuality(iframe) {
+  // Request highest available YouTube resolution (4K / 2K / 1080p) & optionally disable captions via IFrame API
+  function requestHighestYouTubeQuality(iframe, disableCaptions) {
     if (!iframe) return;
     function sendQualityHints() {
       try {
@@ -22,12 +22,28 @@
             args: [q]
           }), '*');
         });
+        if (disableCaptions) {
+          ['captions', 'cc'].forEach(function (mod) {
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'unloadModule',
+              args: [mod]
+            }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setOption',
+              args: [mod, 'track', {}]
+            }), '*');
+          });
+        }
       } catch (e) {}
     }
     iframe.addEventListener('load', function () {
       sendQualityHints();
-      setTimeout(sendQualityHints, 600);
+      setTimeout(sendQualityHints, 350);
+      setTimeout(sendQualityHints, 900);
       setTimeout(sendQualityHints, 1800);
+      setTimeout(sendQualityHints, 3200);
     });
   }
 
@@ -123,7 +139,13 @@
     tl.to('.hero-line-inner', {
       y: '0%',
       duration: 1.1,
-      stagger: 0.1
+      stagger: 0.1,
+      onComplete: function () {
+        // Release overflow after entrance animation to prevent clipping of text shadows / outlines
+        qsa('.hero-line').forEach(function (el) {
+          el.style.overflow = 'visible';
+        });
+      }
     })
     .to('.hero-role', {
       opacity: 1,
@@ -142,35 +164,147 @@
     }, '-=0.4');
   }
 
-  // ─── 3. SCROLL-DRIVEN DAY-TO-NIGHT BG VIDEO & TIMECODE ────
+  // ─── 3. SCROLL-DRIVEN DAY-TO-NIGHT BG VIDEO, SKY PALETTE & TIMECODE ────
   function initDayNightScrollExperience() {
     const bgVideo    = qs('#bgDayVideo');
     const progressEl = qs('#timecodeProgress');
     const playheadEl = qs('#timecodePlayhead');
     const readoutEl  = qs('#timecodeReadout');
     const phaseEl    = qs('#timecodePhase');
+    const railEl     = qs('#timecodeRail');
+    const trackEl    = qs('#timecodeTrack');
+    const rootStyle  = document.documentElement.style;
 
     let videoDuration = 8.0;
     let targetProgress = 0;
     let smoothProgress = 0;
+    let isDraggingTrack = false;
+
+    // 6-phase Sky Color Keyframes matching BGvideo.mp4 progression
+    const SKY_STOPS = [
+      {
+        p: 0.00, // DAWN (rose gold, peach mist, warm plum halo)
+        accent: [255, 214, 165],
+        accent2: [243, 196, 251],
+        cardBg: [255, 238, 232, 0.16],
+        cardHover: [255, 244, 238, 0.25],
+        glassStrong: [52, 34, 68, 0.42],
+        halo: [38, 22, 54, 0.34]
+      },
+      {
+        p: 0.24, // MORNING (sunlit pearl, sky azure, airy mist)
+        accent: [255, 226, 158],
+        accent2: [186, 228, 255],
+        cardBg: [240, 248, 255, 0.17],
+        cardHover: [248, 252, 255, 0.26],
+        glassStrong: [36, 54, 82, 0.40],
+        halo: [24, 40, 68, 0.32]
+      },
+      {
+        p: 0.50, // HIGH NOON (crisp alabaster, celestial cyan, cloud glass)
+        accent: [178, 235, 255],
+        accent2: [255, 232, 178],
+        cardBg: [238, 248, 255, 0.18],
+        cardHover: [250, 253, 255, 0.27],
+        glassStrong: [30, 52, 84, 0.42],
+        halo: [20, 38, 66, 0.32]
+      },
+      {
+        p: 0.72, // GOLDEN HOUR (amber nectar, coral horizon, warm violet shadow)
+        accent: [255, 190, 128],
+        accent2: [255, 168, 208],
+        cardBg: [255, 226, 210, 0.16],
+        cardHover: [255, 236, 224, 0.25],
+        glassStrong: [62, 32, 58, 0.45],
+        halo: [46, 20, 48, 0.38]
+      },
+      {
+        p: 0.88, // DUSK (twilight lavender, magenta dusk, deep indigo mist)
+        accent: [226, 180, 255],
+        accent2: [255, 172, 198],
+        cardBg: [216, 198, 255, 0.15],
+        cardHover: [232, 218, 255, 0.24],
+        glassStrong: [34, 24, 62, 0.50],
+        halo: [22, 14, 46, 0.44]
+      },
+      {
+        p: 1.00, // MIDNIGHT (starlight violet, silver-blue, nocturnal glass)
+        accent: [198, 178, 255],
+        accent2: [148, 210, 255],
+        cardBg: [190, 200, 255, 0.13],
+        cardHover: [215, 222, 255, 0.22],
+        glassStrong: [18, 16, 38, 0.56],
+        halo: [10, 8, 26, 0.50]
+      }
+    ];
+
+    function lerpArr(a, b, t) {
+      return a.map(function (v, idx) {
+        return v + (b[idx] - v) * t;
+      });
+    }
+
+    function updateSkyPalette(p) {
+      let lower = SKY_STOPS[0];
+      let upper = SKY_STOPS[SKY_STOPS.length - 1];
+      for (let i = 0; i < SKY_STOPS.length - 1; i++) {
+        if (p >= SKY_STOPS[i].p && p <= SKY_STOPS[i + 1].p) {
+          lower = SKY_STOPS[i];
+          upper = SKY_STOPS[i + 1];
+          break;
+        }
+      }
+      const span = Math.max(upper.p - lower.p, 0.0001);
+      const localT = clamp((p - lower.p) / span, 0, 1);
+
+      const acc  = lerpArr(lower.accent, upper.accent, localT).map(Math.round);
+      const acc2 = lerpArr(lower.accent2, upper.accent2, localT).map(Math.round);
+      const cBg  = lerpArr(lower.cardBg, upper.cardBg, localT);
+      const cHov = lerpArr(lower.cardHover, upper.cardHover, localT);
+      const gls  = lerpArr(lower.glassStrong, upper.glassStrong, localT);
+      const hlo  = lerpArr(lower.halo, upper.halo, localT);
+
+      rootStyle.setProperty('--color-accent', `rgb(${acc[0]}, ${acc[1]}, ${acc[2]})`);
+      rootStyle.setProperty('--color-accent-2', `rgb(${acc2[0]}, ${acc2[1]}, ${acc2[2]})`);
+      rootStyle.setProperty('--color-accent-glow', `rgba(${acc[0]}, ${acc[1]}, ${acc[2]}, 0.22)`);
+      rootStyle.setProperty('--color-bg-card', `rgba(${Math.round(cBg[0])}, ${Math.round(cBg[1])}, ${Math.round(cBg[2])}, ${cBg[3].toFixed(3)})`);
+      rootStyle.setProperty('--color-bg-card-hover', `rgba(${Math.round(cHov[0])}, ${Math.round(cHov[1])}, ${Math.round(cHov[2])}, ${cHov[3].toFixed(3)})`);
+      rootStyle.setProperty('--sky-glass-strong', `rgba(${Math.round(gls[0])}, ${Math.round(gls[1])}, ${Math.round(gls[2])}, ${gls[3].toFixed(3)})`);
+      rootStyle.setProperty('--sky-halo', `rgba(${Math.round(hlo[0])}, ${Math.round(hlo[1])}, ${Math.round(hlo[2])}, ${hlo[3].toFixed(3)})`);
+    }
 
     if (bgVideo) {
-      bgVideo.addEventListener('loadedmetadata', function () {
+      bgVideo.muted = true;
+      bgVideo.setAttribute('playsinline', '');
+      bgVideo.setAttribute('webkit-playsinline', '');
+
+      const onVideoReady = function () {
         if (bgVideo.duration && isFinite(bgVideo.duration)) {
           videoDuration = bgVideo.duration;
         }
-      });
+        try {
+          if (bgVideo.currentTime === 0) {
+            bgVideo.currentTime = 0.05;
+          }
+        } catch (e) {}
+      };
+
+      bgVideo.addEventListener('loadedmetadata', onVideoReady);
+      bgVideo.addEventListener('canplay', onVideoReady);
+      if (bgVideo.readyState >= 1) {
+        onVideoReady();
+      }
 
       const primePromise = bgVideo.play();
       if (primePromise && typeof primePromise.then === 'function') {
         primePromise.then(function () {
           bgVideo.pause();
-          bgVideo.currentTime = 0;
         }).catch(function () {});
       }
     }
 
     function computeScrollProgress() {
+      if (isDraggingTrack) return;
       const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
       targetProgress = clamp(window.scrollY / maxScroll, 0, 1);
     }
@@ -178,6 +312,58 @@
     window.addEventListener('scroll', computeScrollProgress, { passive: true });
     window.addEventListener('resize', computeScrollProgress, { passive: true });
     computeScrollProgress();
+
+    // ── Interactive Scrub & Drag on the Timecode Rail ──
+    function scrubToEvent(e) {
+      if (!trackEl) return;
+      const rect = trackEl.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const clientY = (e.clientY != null) ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      const ratio = clamp((clientY - rect.top) / rect.height, 0, 1);
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+      const targetY = ratio * maxScroll;
+
+      targetProgress = ratio;
+      if (isDraggingTrack) {
+        window.scrollTo(0, targetY);
+      } else {
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+      }
+    }
+
+    if (trackEl && railEl) {
+      trackEl.addEventListener('pointerdown', function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        isDraggingTrack = true;
+        try {
+          trackEl.setPointerCapture(e.pointerId);
+        } catch (err) {}
+        railEl.classList.add('is-dragging');
+        document.body.classList.add('is-scrubbing');
+        scrubToEvent(e);
+      });
+
+      trackEl.addEventListener('pointermove', function (e) {
+        if (!isDraggingTrack) return;
+        scrubToEvent(e);
+      });
+
+      const onPointerEnd = function (e) {
+        if (!isDraggingTrack) return;
+        isDraggingTrack = false;
+        try {
+          if (e && e.pointerId != null) {
+            trackEl.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
+        railEl.classList.remove('is-dragging');
+        document.body.classList.remove('is-scrubbing');
+      };
+
+      trackEl.addEventListener('pointerup', onPointerEnd);
+      trackEl.addEventListener('pointercancel', onPointerEnd);
+      window.addEventListener('pointerup', onPointerEnd);
+    }
 
     function formatTimecode(progress) {
       const totalSecondsInDay = 86399; // 23:59:59
@@ -198,8 +384,10 @@
       return 'MIDNIGHT';
     }
 
+    let lastPaletteProgress = -1;
+
     function tickDayNight() {
-      smoothProgress = lerp(smoothProgress, targetProgress, 0.12);
+      smoothProgress = isDraggingTrack ? targetProgress : lerp(smoothProgress, targetProgress, 0.14);
 
       const pct = (smoothProgress * 100).toFixed(2) + '%';
       if (progressEl) progressEl.style.height = pct;
@@ -207,11 +395,20 @@
       if (readoutEl)  readoutEl.textContent = formatTimecode(smoothProgress);
       if (phaseEl)    phaseEl.textContent = getDayPhase(smoothProgress);
 
-      if (bgVideo && bgVideo.readyState >= 2 && !bgVideo.seeking) {
+      if (Math.abs(smoothProgress - lastPaletteProgress) > 0.002) {
+        updateSkyPalette(smoothProgress);
+        lastPaletteProgress = smoothProgress;
+      }
+
+      if (bgVideo && bgVideo.readyState >= 1 && !bgVideo.seeking) {
         const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
-        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
+        if (Math.abs(bgVideo.currentTime - desiredTime) > 0.02) {
           try {
-            bgVideo.currentTime = desiredTime;
+            if (typeof bgVideo.fastSeek === 'function') {
+              bgVideo.fastSeek(desiredTime);
+            } else {
+              bgVideo.currentTime = desiredTime;
+            }
           } catch (e) {}
         }
       }
@@ -219,26 +416,117 @@
       requestAnimationFrame(tickDayNight);
     }
 
+    updateSkyPalette(0);
     requestAnimationFrame(tickDayNight);
   }
 
-  // ─── 4. LETTERBOX ─────────────────────────────────────────
+  // ─── 4. 3D CLOUD TUNNEL & HERO FORWARD-FLIGHT ZOOM ────────
   function initLetterbox() {
-    const hero = qs('.hero');
-    if (!hero || !hasScrollTrigger()) return;
+    const hero        = qs('.hero');
+    const flightStage = qs('#heroFlightStage');
+    const heroClouds  = qs('#heroClouds3D');
+    const skyTunnel   = qs('#skyCloudTunnel');
 
-    ScrollTrigger.create({
-      trigger: hero,
-      start: 'top top',
-      end: 'bottom top',
-      onUpdate(self) {
-        if (self.progress > 0.1) {
+    // Create ambient cloud wisps in the global sky tunnel
+    const tunnelWisps = [];
+    if (skyTunnel && !skyTunnel.children.length) {
+      const wispConfigs = [
+        { x: -32, y: -24, w: 540, h: 240, offset: 0.00 },
+        { x:  34, y: -18, w: 600, h: 260, offset: 0.18 },
+        { x: -38, y:  22, w: 580, h: 250, offset: 0.36 },
+        { x:  36, y:  26, w: 520, h: 230, offset: 0.54 },
+        { x: -26, y:   4, w: 640, h: 280, offset: 0.72 },
+        { x:  28, y:  -6, w: 560, h: 240, offset: 0.88 }
+      ];
+      wispConfigs.forEach(function (cfg) {
+        const wisp = document.createElement('div');
+        wisp.className = 'sky-cloud-wisp';
+        wisp.style.width = cfg.w + 'px';
+        wisp.style.height = cfg.h + 'px';
+        wisp.style.left = `calc(50% + ${cfg.x}vw - ${cfg.w / 2}px)`;
+        wisp.style.top  = `calc(50% + ${cfg.y}vh - ${cfg.h / 2}px)`;
+        skyTunnel.appendChild(wisp);
+        tunnelWisps.push({ el: wisp, cfg: cfg });
+      });
+    }
+
+    // Create subtle foreground mist layers in Hero that part as you fly forward
+    const heroWispEls = [];
+    if (heroClouds && !heroClouds.children.length) {
+      const heroCloudData = [
+        { left: '-8%',  top: '14%', w: '46vw', h: '28vh', dirX: -1, dirY: -0.4 },
+        { right: '-8%', top: '18%', w: '48vw', h: '30vh', dirX:  1, dirY: -0.3 },
+        { left: '6%',   top: '62%', w: '42vw', h: '24vh', dirX: -0.8, dirY: 0.5 },
+        { right: '4%',  top: '58%', w: '44vw', h: '26vh', dirX:  0.8, dirY: 0.4 }
+      ];
+      heroCloudData.forEach(function (d) {
+        const el = document.createElement('div');
+        el.style.cssText = 'position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(ellipse at center, rgba(255,250,245,0.16) 0%, rgba(255,235,225,0.06) 48%, transparent 74%);filter:blur(26px);will-change:transform,opacity;';
+        el.style.width = d.w;
+        el.style.height = d.h;
+        if (d.left) el.style.left = d.left;
+        if (d.right) el.style.right = d.right;
+        el.style.top = d.top;
+        heroClouds.appendChild(el);
+        heroWispEls.push({ el: el, dirX: d.dirX, dirY: d.dirY });
+      });
+    }
+
+    function updateFlightCamera() {
+      const scrollY = window.scrollY;
+      const vh = Math.max(window.innerHeight, 1);
+
+      // 1. Hero forward-flight camera pass-through (scales toward viewer & parts into mist)
+      if (hero && flightStage) {
+        const heroProgress = clamp(scrollY / (vh * 0.92), 0, 1);
+        if (heroProgress > 0.08) {
           hero.classList.add('is-cinematic');
         } else {
           hero.classList.remove('is-cinematic');
         }
+
+        const scale = 1 + heroProgress * 0.24;
+        const zTranslate = heroProgress * 160;
+        const yTranslate = -heroProgress * 36;
+        const opacity = clamp(1 - Math.pow(heroProgress, 1.35) * 1.15, 0, 1);
+        const blurPx = (heroProgress * 9).toFixed(2);
+
+        flightStage.style.transform = `translate3d(0, ${yTranslate.toFixed(1)}px, ${zTranslate.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+        flightStage.style.opacity = opacity.toFixed(3);
+        flightStage.style.filter = heroProgress > 0.02 ? `blur(${blurPx}px)` : 'none';
+
+        heroWispEls.forEach(function (item) {
+          const shiftX = item.dirX * heroProgress * 140;
+          const shiftY = item.dirY * heroProgress * 90;
+          const cScale = 1 + heroProgress * 0.45;
+          const cOpacity = clamp(1 - heroProgress * 1.1, 0, 1);
+          item.el.style.transform = `translate3d(${shiftX.toFixed(1)}px, ${shiftY.toFixed(1)}px, 0) scale(${cScale.toFixed(2)})`;
+          item.el.style.opacity = cOpacity.toFixed(3);
+        });
       }
-    });
+
+      // 2. Continuous 3D Cloud Tunnel wisps cycling forward past the camera on scroll
+      if (tunnelWisps.length) {
+        const flightCycles = scrollY / (vh * 1.6);
+        tunnelWisps.forEach(function (wispObj) {
+          const cycle = (flightCycles + wispObj.cfg.offset) % 1;
+          // z ranges from -700px (distant mist) to +260px (passing camera)
+          const z = -700 + cycle * 960;
+          const driftX = (wispObj.cfg.x > 0 ? 1 : -1) * cycle * 90;
+          // Smooth bell curve opacity: 0 at 0, peaks at 0.55, 0 at 1
+          const alpha = Math.sin(cycle * Math.PI) * 0.65;
+          const scale = 0.65 + cycle * 0.75;
+          wispObj.el.style.transform = `translate3d(${driftX.toFixed(1)}px, 0, ${z.toFixed(1)}px) scale(${scale.toFixed(2)})`;
+          wispObj.el.style.opacity = clamp(alpha, 0, 0.65).toFixed(3);
+        });
+      }
+    }
+
+    window.addEventListener('scroll', function () {
+      requestAnimationFrame(updateFlightCamera);
+    }, { passive: true });
+    window.addEventListener('resize', updateFlightCamera, { passive: true });
+    updateFlightCamera();
   }
 
   // ─── 5. CUSTOM CURSOR ─────────────────────────────────────
@@ -307,6 +595,18 @@
       });
       el.addEventListener('mouseleave', function () {
         cursor.classList.remove('is-view');
+        if (cursorText) cursorText.textContent = '';
+      });
+    });
+
+    const scrubTargets = qsa('#timecodeRail, #timecodeTrack, #timecodePlayhead');
+    scrubTargets.forEach(function (el) {
+      el.addEventListener('mouseenter', function () {
+        cursor.classList.add('is-scrub');
+        if (cursorText) cursorText.textContent = 'DRAG';
+      });
+      el.addEventListener('mouseleave', function () {
+        cursor.classList.remove('is-scrub');
         if (cursorText) cursorText.textContent = '';
       });
     });
@@ -400,21 +700,22 @@
     });
   }
 
-  // ─── 9. SCROLL REVEAL ─────────────────────────────────────
+  // ─── 9. SCROLL REVEAL & 3D Z-AXIS FORWARD-FLIGHT ENGINE ──
+  let refreshFlightCards = function () {};
+
   function initScrollReveal() {
     const revealEls = qsa('[data-scroll-reveal]');
     const cards     = qsa('[data-scroll-reveal-card]');
-
-    if (!hasScrollTrigger()) {
-      revealEls.forEach(el => el.classList.add('is-visible'));
-      cards.forEach(card => card.classList.add('is-visible'));
-      return;
-    }
+    const worksSec  = qs('#works');
 
     revealEls.forEach(function (el) {
+      if (!hasScrollTrigger()) {
+        el.classList.add('is-visible');
+        return;
+      }
       ScrollTrigger.create({
         trigger: el,
-        start: 'top 90%',
+        start: 'top 92%',
         once: true,
         onEnter() {
           el.classList.add('is-visible');
@@ -422,7 +723,7 @@
       });
     });
 
-    if (hasGSAP()) {
+    if (hasGSAP() && hasScrollTrigger()) {
       const headingLines = qsa('.heading-line span');
       headingLines.forEach(function (span) {
         gsap.fromTo(span,
@@ -433,7 +734,7 @@
             ease: 'power4.out',
             scrollTrigger: {
               trigger: span.closest('.heading-line') || span,
-              start: 'top 90%',
+              start: 'top 92%',
               once: true
             }
           }
@@ -442,15 +743,158 @@
     }
 
     cards.forEach(function (card) {
-      ScrollTrigger.create({
-        trigger: card,
-        start: 'top 92%',
-        once: true,
-        onEnter() {
-          card.classList.add('is-visible');
+      card.classList.add('is-visible');
+      card.addEventListener('mouseenter', function () {
+        card.dataset.isHovered = 'true';
+        if (!worksSec || !worksSec.classList.contains('is-grid-view')) {
+          card.style.filter = 'none';
+          card.style.opacity = '1';
         }
       });
+      card.addEventListener('mouseleave', function () {
+        delete card.dataset.isHovered;
+        requestAnimationFrame(updateSpatialFlightRows);
+      });
     });
+
+    // Continuous 3D Z-axis emergence as user flies forward through the clouds
+    function updateSpatialFlightRows() {
+      const isGridView = worksSec && worksSec.classList.contains('is-grid-view');
+      const vh = Math.max(window.innerHeight, 1);
+
+      cards.forEach(function (card) {
+        if (card.classList.contains('is-hidden')) return;
+
+        // In Quick Grid mode (for HR scanning), keep all cards flat, uniform, and 100% crisp
+        if (isGridView && card.closest('.works-grid')) {
+          card.style.transform = '';
+          card.style.opacity = '';
+          card.style.filter = '';
+          return;
+        }
+
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.top + rect.height * 0.5;
+        // normalized position in viewport: 0 = top edge, 0.5 = center, 1 = bottom edge
+        const normY = cardCenter / vh;
+
+        let scale = 1;
+        let translateZ = 0;
+        let translateY = 0;
+        let opacity = 1;
+        let blur = 0;
+
+        // Generous crisp focus zone (0.08 to 0.85) so projects stay sharp and easy to view
+        if (normY > 0.85) {
+          // Approaching from ahead in the clouds (bottom edge of viewport)
+          const t = clamp((normY - 0.85) / 0.34, 0, 1);
+          const easeT = t * t;
+          scale = 1 - easeT * 0.12;         // 0.88 -> 1.0
+          translateZ = -easeT * 150;        // -150px -> 0px
+          translateY = easeT * 26;          // +26px -> 0px
+          opacity = clamp(1 - easeT * 0.78, 0.22, 1);
+          blur = easeT * 4.5;
+        } else if (normY < 0.08) {
+          // Passing above/behind the camera (top edge of viewport)
+          const t = clamp((0.08 - normY) / 0.34, 0, 1);
+          const easeT = t * t;
+          scale = 1 + easeT * 0.03;         // 1.0 -> 1.03
+          translateZ = easeT * 32;          // 0px -> +32px
+          translateY = -easeT * 12;         // 0px -> -12px
+          opacity = clamp(1 - easeT * 0.55, 0.42, 1);
+          blur = easeT * 2.0;
+        }
+
+        if (card.dataset.isHovered === 'true') {
+          blur = 0;
+          opacity = 1;
+          scale = Math.max(scale, 1.01);
+        }
+
+        card.style.transform = `translate3d(0, ${translateY.toFixed(1)}px, ${translateZ.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+        card.style.opacity = opacity.toFixed(3);
+        card.style.filter = blur > 0.15 ? `blur(${blur.toFixed(2)}px)` : 'none';
+      });
+    }
+
+    // Magnetic Scroll Focus Assist: gently attracts the nearest project row into focus when scrolling pauses
+    let magnetTimer = null;
+    let isMagnetGliding = false;
+    let lastSnappedRowTop = null;
+
+    function triggerMagneticRowFocus() {
+      if (isMagnetGliding) return;
+      if (!worksSec || worksSec.classList.contains('is-grid-view')) return;
+      if (document.body.classList.contains('is-scrubbing')) return;
+      if (document.body.style.overflow === 'hidden') return;
+
+      const vh = Math.max(window.innerHeight, 1);
+      const worksRect = worksSec.getBoundingClientRect();
+      // Only active while scrolling inside the main body of the Works section
+      if (worksRect.top > vh * 0.25 || worksRect.bottom < vh * 0.65) {
+        lastSnappedRowTop = null;
+        return;
+      }
+
+      const workGridCards = qsa('.works-grid .work-card:not(.is-hidden)');
+      if (!workGridCards.length) return;
+
+      // Ideal focal sweet-spot center (slightly below sticky command bar)
+      const focalY = vh * 0.53;
+      let bestCard = null;
+      let bestAbsDist = Infinity;
+      let bestDelta = 0;
+
+      workGridCards.forEach(function (card) {
+        const r = card.getBoundingClientRect();
+        if (r.bottom < 80 || r.top > vh - 40) return;
+        const center = r.top + r.height * 0.5;
+        const delta = center - focalY;
+        const absDist = Math.abs(delta);
+        if (absDist < bestAbsDist) {
+          bestAbsDist = absDist;
+          bestDelta = delta;
+          bestCard = card;
+        }
+      });
+
+      if (!bestCard) return;
+
+      // Absolute document top of this row so we don't repeatedly re-snap the same row on tiny nudges
+      const rowDocTop = Math.round(bestCard.getBoundingClientRect().top + window.scrollY);
+      const captureRadius = vh * 0.28; // ~260px magnetic capture window
+
+      if (bestAbsDist > 16 && bestAbsDist < captureRadius) {
+        if (lastSnappedRowTop !== null && Math.abs(rowDocTop - lastSnappedRowTop) < 40) {
+          return;
+        }
+        lastSnappedRowTop = rowDocTop;
+        isMagnetGliding = true;
+        window.scrollTo({
+          top: window.scrollY + bestDelta,
+          behavior: 'smooth'
+        });
+        setTimeout(function () {
+          isMagnetGliding = false;
+        }, 520);
+      } else if (bestAbsDist <= 16) {
+        lastSnappedRowTop = rowDocTop;
+      }
+    }
+
+    refreshFlightCards = function () {
+      requestAnimationFrame(updateSpatialFlightRows);
+    };
+
+    window.addEventListener('scroll', function () {
+      requestAnimationFrame(updateSpatialFlightRows);
+      if (!isMagnetGliding) {
+        clearTimeout(magnetTimer);
+        magnetTimer = setTimeout(triggerMagneticRowFocus, 150);
+      }
+    }, { passive: true });
+    window.addEventListener('resize', refreshFlightCards, { passive: true });
+    refreshFlightCards();
   }
 
   // ─── 10. VIEWPORT-ONLY SHOWCASE AUTOPLAY & HOVER PREVIEWS ──
@@ -472,10 +916,10 @@
               const iframe = document.createElement('iframe');
               iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
               const endParam = endSec > 0 ? `&end=${endSec}` : '';
-              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160${endParam}`;
+              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&cc_load_policy=0&iv_load_policy=3&vq=hd2160${endParam}`;
               iframe.setAttribute('allow', 'autoplay; encrypted-media');
               iframe.setAttribute('frameborder', '0');
-              requestHighestYouTubeQuality(iframe);
+              requestHighestYouTubeQuality(iframe, true);
               media.appendChild(iframe);
 
               if (endSec > 0) {
@@ -530,10 +974,10 @@
           if (qs('.work-card-preview-iframe', media)) return;
           const iframe = document.createElement('iframe');
           iframe.className = 'work-card-preview-iframe';
-          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&vq=hd2160&start=${startSec}`;
+          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&playsinline=1&rel=0&modestbranding=1&cc_load_policy=0&iv_load_policy=3&vq=hd2160&start=${startSec}`;
           iframe.setAttribute('allow', 'autoplay; encrypted-media');
           iframe.setAttribute('frameborder', '0');
-          requestHighestYouTubeQuality(iframe);
+          requestHighestYouTubeQuality(iframe, true);
           media.appendChild(iframe);
         }, 280);
       });
@@ -1036,14 +1480,153 @@
     });
   }
 
-  // ─── 15. CATEGORY FILTER (KEEPS HORIZONTALS & VERTICALS SEPARATED) ─
+  // ─── 15. CATEGORY FILTER, HR COMPETENCY BANNER & QUICK GRID VIEW ─
   function initCategoryFilter() {
-    const filterBtns = qsa('.filter-btn');
-    const grid       = qs('.works-grid');
-    const workCards  = qsa('.work-card');
-    const gridBreak  = qs('.works-grid-break');
+    const worksSec      = qs('#works');
+    const filterBtns    = qsa('.filter-btn');
+    const grid          = qs('.works-grid');
+    const workCards     = qsa('.work-card');
+    const gridBreak     = qs('.works-grid-break');
+    const skillFocusEl  = qs('#categorySkillFocus');
+    const skillToolsEl  = qs('#categorySkillTools');
+    const viewModeBtns  = qsa('.view-mode-btn');
+    const inlineGridBtn = qs('#inlineGridTrigger');
+
     if (!filterBtns.length || !workCards.length || !grid) return;
 
+    // Category -> HR Competency & Software Mapping (matching exact data-filter keys)
+    const CATEGORY_PROFILES = {
+      all: {
+        focus: 'Full-Stack Visual Storytelling · Cinematography, 2D/3D Motion, Game Art & AI Workflows',
+        tools: ['After Effects', 'DaVinci Resolve', 'Premiere Pro', 'Cinema 4D', 'Blender', 'Autodesk Maya', 'Unity', 'Photoshop']
+      },
+      cinematic: {
+        focus: 'Directing, Cinematography, Interactive Narrative Editing, Color Grading & Sound Design',
+        tools: ['DaVinci Resolve', 'Premiere Pro', 'After Effects', 'Canon EOS 250D', 'Color Grading & Sound Design']
+      },
+      motion: {
+        focus: '2D/3D Motion Graphics, Exhibition Animation, Kinetic Typography & Visual FX',
+        tools: ['After Effects', 'Premiere Pro', 'Cinema 4D', 'Autodesk Maya', 'TouchDesigner', 'Illustrator', 'Photoshop']
+      },
+      game: {
+        focus: 'Interactive Game Scenery, 2D Character Rigging, Simulation UI/UX & Game Mechanics',
+        tools: ['Unity', 'C# Scripting', 'After Effects (Duik Angela)', 'Procreate', 'UI/UX Prototyping']
+      },
+      '3d': {
+        focus: '3D Environment Modeling, Character Design, Procedural Texturing & Lighting',
+        tools: ['Autodesk Maya', 'Blender', 'Substance 3D Painter', 'Cinema 4D', 'TouchDesigner', '3D Lighting & Shaders']
+      },
+      ai: {
+        focus: 'Generative Video Workflows, AI Media Literacy, Visual Concepting & Hybrid Compositing',
+        tools: ['Google Veo', 'Nano Banana Pro', 'Flow Studio', 'Higgsfield', 'After Effects', 'Premiere Pro']
+      },
+      photography: {
+        focus: 'Nature & Portrait Photography, Atmospheric Lighting, Color Theory & Retouching',
+        tools: ['Canon EOS 250D', 'Adobe Lightroom', 'Adobe Photoshop', 'Color Theory & Retouching']
+      }
+    };
+
+    // 1. Inject HR Tool/Skill summary strip into every project card for Quick Grid scanning
+    workCards.forEach(function (card) {
+      const contentEl = qs('.work-card-content', card);
+      if (!contentEl || qs('.work-card-hr-tools', contentEl)) return;
+
+      const infoBtn = qs('.work-card-info-btn', card);
+      const linkEl  = qs('.work-card-link', card);
+      const rawTools = (infoBtn && infoBtn.getAttribute('data-detail-tools')) ||
+                       (linkEl && linkEl.getAttribute('data-detail-tools')) ||
+                       'After Effects, Premiere Pro';
+
+      const hrToolsDiv = document.createElement('div');
+      hrToolsDiv.className = 'work-card-hr-tools';
+      const topTools = rawTools.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3).join(', ');
+      hrToolsDiv.textContent = 'Tools: ' + topTools;
+      contentEl.appendChild(hrToolsDiv);
+    });
+
+    // 2. Populate live project counts on each Category Filter pill
+    filterBtns.forEach(function (btn) {
+      const filter = btn.getAttribute('data-filter') || 'all';
+      let count = 0;
+      if (filter === 'all') {
+        count = workCards.length;
+      } else {
+        workCards.forEach(function (card) {
+          const cats = (card.getAttribute('data-category') || '').trim().split(/\s+/);
+          if (cats.includes(filter)) count++;
+        });
+      }
+      if (!qs('.filter-count', btn)) {
+        const badge = document.createElement('span');
+        badge.className = 'filter-count';
+        badge.textContent = String(count);
+        btn.appendChild(badge);
+      }
+    });
+
+    // Format Key Software with clean commas and spaces
+    function updateSkillBanner(filterKey) {
+      const profile = CATEGORY_PROFILES[filterKey] || CATEGORY_PROFILES.all;
+      if (skillFocusEl) {
+        skillFocusEl.textContent = profile.focus;
+      }
+      if (skillToolsEl) {
+        skillToolsEl.textContent = profile.tools.join(', ');
+      }
+    }
+
+    // Center lone horizontal or vertical cards when they are the only item (or pair) in a row
+    function updateGridRowCentering() {
+      workCards.forEach(function (card) {
+        card.classList.remove(
+          'is-row-single-horizontal',
+          'is-row-single-vertical',
+          'is-row-pair-vertical-first',
+          'is-row-pair-vertical-second'
+        );
+      });
+
+      const visibleCards = workCards.filter(function (c) {
+        return !c.classList.contains('is-hidden');
+      });
+
+      // 1. Check contiguous runs of standard horizontal cards (span 3)
+      let currentHorizRun = [];
+      function flushHorizRun() {
+        if (currentHorizRun.length % 2 === 1) {
+          currentHorizRun[currentHorizRun.length - 1].classList.add('is-row-single-horizontal');
+        }
+        currentHorizRun = [];
+      }
+
+      visibleCards.forEach(function (card) {
+        if (card.classList.contains('work-card--vertical')) {
+          flushHorizRun();
+        } else if (card.classList.contains('work-card--wide')) {
+          flushHorizRun();
+        } else {
+          currentHorizRun.push(card);
+        }
+      });
+      flushHorizRun();
+
+      // 2. Check visible vertical cards (span 2 -> 3 per row)
+      const visibleVerticals = visibleCards.filter(function (c) {
+        return c.classList.contains('work-card--vertical');
+      });
+      const rem = visibleVerticals.length % 3;
+      if (rem === 1) {
+        visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-single-vertical');
+      } else if (rem === 2) {
+        visibleVerticals[visibleVerticals.length - 2].classList.add('is-row-pair-vertical-first');
+        visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-pair-vertical-second');
+      }
+    }
+
+    updateSkillBanner('all');
+    updateGridRowCentering();
+
+    // 3. Filter click handler
     filterBtns.forEach(function (btn) {
       btn.addEventListener('click', function () {
         filterBtns.forEach(function (b) {
@@ -1051,7 +1634,8 @@
         });
         btn.classList.add('is-active');
 
-        const filter = btn.getAttribute('data-filter');
+        const filter = btn.getAttribute('data-filter') || 'all';
+        updateSkillBanner(filter);
 
         workCards.forEach(function (card) {
           const rawCategories = card.getAttribute('data-category') || '';
@@ -1075,11 +1659,56 @@
           gridBreak.style.order = filter === 'all' ? '' : '2';
         }
 
+        updateGridRowCentering();
+
+        if (typeof refreshFlightCards === 'function') {
+          refreshFlightCards();
+        }
         if (hasScrollTrigger()) {
           ScrollTrigger.refresh();
         }
       });
     });
+
+    // 4. View Mode Switcher (Sky Flight vs. Quick Grid for HR)
+    function setViewMode(mode) {
+      if (!worksSec) return;
+      const isGrid = mode === 'grid';
+      worksSec.classList.toggle('is-grid-view', isGrid);
+
+      viewModeBtns.forEach(function (btn) {
+        const active = btn.getAttribute('data-view-mode') === mode;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      if (inlineGridBtn) {
+        inlineGridBtn.textContent = isGrid
+          ? 'Switch to 3D Sky Flight ↗'
+          : 'Switch to HR Quick Grid ↗';
+      }
+
+      if (typeof refreshFlightCards === 'function') {
+        refreshFlightCards();
+      }
+      if (hasScrollTrigger()) {
+        ScrollTrigger.refresh();
+      }
+    }
+
+    viewModeBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const mode = btn.getAttribute('data-view-mode') || 'flight';
+        setViewMode(mode);
+      });
+    });
+
+    if (inlineGridBtn) {
+      inlineGridBtn.addEventListener('click', function () {
+        const currentlyGrid = worksSec && worksSec.classList.contains('is-grid-view');
+        setViewMode(currentlyGrid ? 'flight' : 'grid');
+      });
+    }
   }
 
   // ─── 16. SMOOTH SCROLL ANCHORS ────────────────────────────
