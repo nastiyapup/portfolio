@@ -22,6 +22,9 @@
             args: [q]
           }), '*');
         });
+        try {
+          iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+        } catch (err) {}
         if (disableCaptions) {
           ['captions', 'cc'].forEach(function (mod) {
             iframe.contentWindow.postMessage(JSON.stringify({
@@ -84,7 +87,7 @@
     const counter    = qs('#preloaderCounter') || qs('.preloader-counter');
     const progressEl = qs('#preloaderProgress') || qs('.preloader-progress');
 
-    if (!preloader) {
+    if (!preloader || preloader.classList.contains('is-done')) {
       initHeroEntrance();
       return;
     }
@@ -279,6 +282,7 @@
       v.muted = true;
       v.setAttribute('playsinline', '');
       v.setAttribute('webkit-playsinline', '');
+      try { v.load(); } catch (e) {}
 
       const onVReady = function () {
         if (v.duration && isFinite(v.duration)) {
@@ -1033,7 +1037,45 @@
     });
   }
 
-    /* video loop listener
+    // ── Auto-replay YouTube showcase & preview videos on loop ──
+    window.addEventListener('message', function (e) {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (!data) return;
+        const isEnded = (data.event === 'onStateChange' && (data.info === 0 || data.info === '0')) ||
+                        (data.info && (data.info.playerState === 0 || data.info.playerState === '0'));
+        if (isEnded) {
+          if (e.source) {
+            try {
+              e.source.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*');
+              e.source.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+            } catch (err) {}
+          }
+          qsa('.work-card-preview-iframe').forEach(function (iframe) {
+            if (iframe.contentWindow) {
+              try {
+                iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*');
+                iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
+              } catch (err) {}
+            }
+          });
+        }
+      } catch (err) {}
+    });
+
+    // Auto-replay HTML5 loop videos as a rock-solid fallback
+    qsa('video[loop]').forEach(function (v) {
+      v.addEventListener('ended', function () {
+        try {
+          v.currentTime = 0;
+          v.play().catch(function () {});
+        } catch (err) {}
+      });
+    });
+    /*
+        } catch (err) {}
+      });
+    });
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data && data.event === 'onStateChange' && data.info === 0) {
@@ -1577,7 +1619,7 @@
       },
       ai: {
         focus: 'Generative Video Workflows, AI Media Literacy, Visual Concepting & Hybrid Compositing',
-        tools: ['Google Veo', 'Nano Banana Pro', 'Flow Studio', 'Higgsfield', 'After Effects', 'Premiere Pro']
+        tools: ['Google Veo', 'Topaz Video/Photo', 'Nano Banana Pro', 'Flow Studio', 'Higgsfield', 'After Effects', 'Premiere Pro']
       },
       photography: {
         focus: 'Nature & Portrait Photography, Atmospheric Lighting, Color Theory & Retouching',

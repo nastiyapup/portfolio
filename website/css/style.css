@@ -896,8 +896,11 @@ body.is-scrubbing * {
     opacity: 0.85;
 }
 
-.hero-role .serif-italic {
-    font-size: 1.35em;
+.hero-role .serif-italic { font-size: 1.35em; color: var(--color-accent); letter-spacing: 0; text-transform: none; }
+.hero-role-item { white-space: nowrap; display: inline-block; }
+.hero-role-amp { display: inline-flex; align-items: center; justify-content: center; }
+.hero-role-extra {
+
     color: var(--color-accent);
     letter-spacing: 0;
     text-transform: none;
@@ -2891,7 +2894,21 @@ body.is-scrubbing * {
 
     .hero-bottom {
         flex-direction: column;
-        gap: 28px;
+        position: absolute;
+        bottom: 24px;
+        left: 20px;
+        right: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        z-index: 5;
+    }
+
+    .hero-tagline {
+        font-size: clamp(13px, 3.4vw, 15px);
+        line-height: 1.5;
+        text-align: left;
+        max-width: 92%;
         align-items: flex-start;
     }
 
@@ -2900,7 +2917,11 @@ body.is-scrubbing * {
     }
 
     .hero-title-wrap {
-        padding: 14px 12px;
+        padding: 0;
+        width: 100%;
+        margin-top: 6px;
+        align-items: flex-start;
+        text-align: left;
     }
 
     .hero-title-wrap::before {
@@ -2910,13 +2931,70 @@ body.is-scrubbing * {
     }
 
     .hero-line {
-        padding: 0 8px;
+        padding: 0;
+        text-align: left;
+    }
+
+    .hero {
+        height: 100svh;
+        min-height: 100svh;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .hero-content {
+        justify-content: flex-start;
+        align-items: flex-start;
+        text-align: left;
+        padding: calc(var(--nav-height) + 14px) 20px 24px;
+    }
+
+    .hero-title {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .hero-line-inner {
+        font-size: clamp(38px, 10.5vw, 54px);
+        text-align: left;
+    }
+
+    .hero-role::before,
+    .hero-role::after {
+        display: none !important;
+    }
+
+    .hero-role-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .hero-role-amp {
+        font-size: 1.15em;
+        color: var(--color-accent);
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .marquee-track {
+        animation-duration: 6s !important;
     }
 
     .hero-role {
         font-size: 13px;
-        padding: 7px 18px;
-        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 0;
+        font-size: clamp(10.5px, 2.7vw, 12.5px);
+        letter-spacing: 0.12em;
+        text-align: left;
+        background: transparent;
+        border: none;
+
     }
 
     .works {

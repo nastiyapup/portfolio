@@ -58,6 +58,31 @@
         </div>
     </div>
 
+    <script>
+        (function() {
+            var p = document.getElementById('preloader');
+            var c = document.getElementById('preloaderCounter');
+            var b = document.getElementById('preloaderProgress');
+            if (!p || !c || !b) return;
+            var n = 0;
+            var t = setInterval(function() {
+                n += 5;
+                if (n >= 100) {
+                    n = 100;
+                    clearInterval(t);
+                    c.textContent = '100';
+                    b.style.width = '100%';
+                    p.classList.add('is-done');
+                    document.body.classList.add('is-loaded');
+                    setTimeout(function() { p.style.display = 'none'; }, 550);
+                } else {
+                    c.textContent = String(n);
+                    b.style.width = n + '%';
+                }
+            }, 40);
+        })();
+    </script>
+
     <!-- ========== CUSTOM CURSOR ========== -->
     <div class="cursor" id="cursor">
         <div class="cursor-dot"></div>
@@ -67,12 +92,11 @@
 
     <!-- ========== SCROLL-DRIVEN DAY-TO-NIGHT BACKGROUND VIDEO ========== -->
     <div class="sky-bg" aria-hidden="true">
-        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" muted playsinline webkit-playsinline preload="auto">
+        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" src="assets/BGvideo.mp4" muted playsinline webkit-playsinline preload="auto">
             <source src="assets/BGvideo.mp4" type="video/mp4">
         </video>
-        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" muted playsinline webkit-playsinline preload="auto">
+        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4" muted playsinline webkit-playsinline preload="auto">
             <source src="assets/BGmobile.mp4" type="video/mp4">
-            <source src="assets/BGvideo.mp4" type="video/mp4">
         </video>
         <div class="sky-cloud-tunnel" id="skyCloudTunnel"></div>
         <div class="sky-bg-vignette" id="skyBgVignette"></div>
@@ -129,7 +153,11 @@
                     <span class="hero-line" data-hero-reveal><span class="hero-line-inner">ANASTASIIA</span></span>
                     <span class="hero-line hero-line--outline" data-hero-reveal><span class="hero-line-inner"><em>Pupyrina</em></span></span>
                 </h1>
-                <p class="hero-role" data-hero-reveal>Cinematographer <em class="serif-italic">&amp;</em> Motion Designer</p>
+                <p class="hero-role" data-hero-reveal>
+                    <span class="hero-role-item">Cinematographer</span>
+                    <span class="hero-role-amp"><em class="serif-italic">&amp;</em></span>
+                    <span class="hero-role-item">Motion Designer</span>
+                </p>
             </div>
             <div class="hero-bottom">
                 <p class="hero-tagline" data-hero-reveal>Visual storytelling through<br><em class="serif-italic">motion, 3D &amp; video</em> — Warsaw, Poland</p>
@@ -840,6 +868,7 @@
                         <div class="tool-tags-wrap">
                             <span class="tool-tag">Higgsfield</span>
                             <span class="tool-tag">Google Veo</span>
+                            <span class="tool-tag">Topaz Video/Photo</span>
                             <span class="tool-tag">Nano Banana Pro</span>
                             <span class="tool-tag">Flow Studio</span>
                             <span class="tool-tag">HeyGen (Avatars)</span>
