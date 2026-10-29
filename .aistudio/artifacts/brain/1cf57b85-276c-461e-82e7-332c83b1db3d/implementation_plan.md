@@ -1,96 +1,77 @@
-# Portfolio Refinement: Media Framing, Category Precision & Magnetic Scroll Focus
+# Portfolio Audit & Optimization Implementation Plan
 
-This update resolves media framing and centering across all widescreen video and 3D showcase cards, restores the exact uploaded photography slides, refines project categorization and HR filter bar visibility, and introduces a magnetic scroll-focus assist so project rows effortlessly lock into view as you fly through the sky.
-
-### User Review & Critical Decisions
-
-> [!IMPORTANT]
-> All requested refinements are directly specified and ready for implementation upon your approval:
-
-- **Restored Photography Slides**: Place the uploaded autumn gazebo photo (`IMG_4443`) as the **first slide** (and cover) of *Nature Photography*, and place the uploaded portrait (`IMG_5050`) as the **second slide** of *Portrait Photography*.
-- **Full-Bleed Centered Showcase Videos & 3D Gallery**: Force all widescreen media containers to span `100%` width and center their inner YouTube embeds and 3D image sliders at `50% / 50%` with overscan zoom so black side borders and upper-left offsets are completely eliminated.
-- **Disable Amelie Autoplay Subtitles**: Pass caption-suppression parameters (`cc_load_policy=0`, `iv_load_policy=3`) and send YouTube IFrame API `unloadModule("captions")` commands on load so the Amelie trailer plays cleanly without subtitles.
-- **Category & Subtitle Realignment**:
-  - *What If Your Choice Changes the Ending?* appears exclusively under **Motion Design** (removed from *Cinematic & Film*).
-  - *SYGMA — AI Literacy* projects appear exclusively under **AI-Powered** (removed from *Motion Design*, with *"Motion Design"* removed from the card subtitle).
-- **Centered Single-Card Rows**: Whenever a horizontal or vertical project card is the only item in its row (or when 2 vertical cards share a 3-column row), automatically center the card(s) horizontally in the grid.
-- **Unclipped HR Command Bar & High-Contrast Flight Hint**: Rebalance the command bar layout so *AI-Powered* and *Photography* filter tabs are never obscured by the *Sky Flight / Quick Grid* switcher, format *Key Software* lists with clean commas and spaces (`After Effects, DaVinci Resolve, Premiere Pro...`), and elevate the contrast of the sky-flight hint line.
-- **Magnetic Project Row Attraction**: Expand the sharp focus zone and add a gentle magnetic scroll settle that smoothly pulls the nearest project row into the focal sweet spot when scrolling decelerates.
+This plan addresses all findings from your comprehensive repository analysis across `website/index.html`, `website/css/style.css`, and `website/js/main.js`, incorporating your preferences for a **protected click-to-reveal phone button**, **centered mobile hero layout**, and **all four improvement areas**.
 
 ---
 
-### 1. Overview & Core Concept
+## 1. Runtime Performance Optimization (`website/js/main.js` & `website/css/style.css`)
 
-- **What It Does**: Polishes the visual framing, navigation ergonomics, and scroll physics of Anastasiia Pupyrina's portfolio so both creative directors and HR recruiters experience zero visual glitches or frustrating scroll overshoot.
-- **Target Audience / Persona**: Creative directors, studio leads, and HR recruiters reviewing cinematography, motion design, 3D art, game design, AI workflows, and photography.
-- **Key Value**: Every showcase video and 3D render fills its frame edge-to-edge without black bars, every discipline filter is immediately clickable and accurately categorized, and scrolling naturally settles onto each project row like a soft magnet.
+### A. On-Demand `requestAnimationFrame` Loops (Eliminating Idle CPU/GPU Drain)
+- **Day/Night Scroll & Video Scrubbing (`initDayNightScrollExperience`)**:
+  - Replace the perpetual 60fps `tickDayNight` loop with an **on-demand rAF loop** (`requestDayNightTick()`).
+  - The loop wakes up on `scroll`, `resize`, or timecode drag events, interpolates `smoothProgress` toward `targetProgress`, and **automatically sleeps** once `Math.abs(targetProgress - smoothProgress) < 0.0002` and `bgVideo.seeking` is false.
+- **Custom Cursor (`initCursor`)**:
+  - Convert the permanent cursor `rAF` loop into an **event-driven lerp loop** that wakes on `mousemove` and automatically pauses once the cursor circle settles within `0.15px` of the pointer target.
+- **Marquee Scroll Velocity (`initMarqueeSpeed`)**:
+  - Add an `IntersectionObserver` on `.marquee` so the marquee speed `rAF` only runs when the marquee is visible in the viewport AND scroll velocity differs from the baseline `1.6x` rate, sleeping immediately once velocity dampens back to baseline.
 
----
-
-### 2. User Experience & Visual Design
-
-- **Key User Flows**:
-  1. **HR Orientation & Filtering**: Above the project gallery, the user sees the clearly legible prompt (*"Scroll to fly through the sky · or switch to Quick Grid for rapid HR scanning"*) and a sticky command bar where all seven category tabs (*All*, *Cinematic & Film*, *Motion Design*, *Game Design*, *3D Art*, *AI-Powered*, *Photography*) and the *Sky Flight / Quick Grid* toggle fit comfortably without clipping.
-  2. **Competency Readout**: Clicking any category tab updates the *Discipline Focus* and *Key Software* banner below it, displaying software tools separated by commas and spaces (e.g., `After Effects, DaVinci Resolve, Premiere Pro, Blender, Unity, Photoshop`).
-  3. **Magnetic Sky-Flight Scrolling**: As the user scrolls down through the clouds, project rows emerge from the mist into a generous crystal-clear focal zone. When the user slows or stops scrolling near a row, a gentle magnetic pull centers that row in the viewport so they never accidentally overshoot or have to hunt for the frame.
-  4. **Balanced Row Geometry**: When a row contains a single horizontal card or 1–2 vertical cards (either in *All* view or inside a filtered category), the card(s) sit symmetrically centered on screen rather than hugging the left margin.
-- **Visual Identity & Theme**:
-  - *Widescreen Media Framing*: Showcase cards (*Amelie*, *Cabinet of Memories*, *The Future We Were Promised*, *3D Coquette Room*) enforce `width: 100%` on their media stage with centered `50% / 50%` transforms and `1.22x–1.35x` video overscan to crop out internal YouTube letterboxing/pillarboxing.
-  - *Hint & Filter Legibility*: The flight hint uses bright ivory typography (`#FFFDF9`) with a soft atmospheric glass pill and dark halo shadow so it remains legible over bright dawn and noon clouds.
+### B. Unified Passive Scroll Pipeline & Mobile `backdrop-filter` Budget
+- **Scroll Consolidation**:
+  - Consolidate scroll handling so scroll-driven modules share a clean, `requestAnimationFrame`-throttled passive scroll pipeline rather than firing uncoordinated layout calculations.
+- **Mobile Glassmorphism Optimization (`@media (max-width: 768px)`)**:
+  - Reduce `backdrop-filter: blur(...)` radii on mobile devices (capping heavy 24px–32px blurs down to lightweight 8px–10px blurs on cards and bars) to prevent mobile GPU frame drops while preserving the luminous sky-mist aesthetic.
 
 ---
 
-### 3. Key Product Decisions & Trade-Offs
+## 2. Code Hygiene, Preloader Single-Source & Mobile Hero CSS (`website/index.html`, `website/js/main.js`, `website/css/style.css`)
 
-- **Decision 1: Soft Magnetic Scroll Detent vs. Strict CSS Scroll Snap**
-  - *Chosen Approach*: Velocity-aware JavaScript magnetic settle (`scrollend` / debounced wheel-and-touch settle) paired with an expanded sharp-focus plateau (`12%–84%` viewport height).
-  - *Why*: Strict CSS `scroll-snap-type: y mandatory` fights trackpads, hijacks momentum scrolling, and breaks smooth scrubbing on the right-hand timecode rail. A velocity-aware magnetic assist only activates when the user naturally pauses near a project row, gently gliding it into the focal sweet spot while preserving free scrolling and timecode dragging.
-- **Decision 2: True Aspect-Cover Overscan for YouTube Showcase Iframes**
-  - *Chosen Approach*: Lock `.work-card-media` to `width: 100%` and size embedded showcase iframes using centered 16:9 overscan geometry (`width: 128%; height: 128%; top: 50%; left: 50%; transform: translate(-50%, -50%)`).
-  - *Why*: YouTube's embed player renders a 16:9 canvas with black bars whenever the container aspect ratio differs from 16:9. Overscanning from the center guarantees edge-to-edge video coverage across all widescreen showcase cards.
+### A. Preloader & Video Markup Cleanup
+- **Single Preloader Controller**:
+  - Ensure the preloader is driven exclusively by `initPreloader()` in `website/js/main.js` with a single deterministic timer and 2.2s hard fail-safe (no duplicate inline script race condition).
+- **Clean Background Video & Dead Code Removal**:
+  - Keep clean `<video>` + `<source>` markup in `website/index.html` (supporting `assets/BGvideo.mp4` and optional mobile source fallback without redundant attributes on `<video>`).
+  - Remove any dead `if (false && bgVideo)` blocks, duplicate `hasUserScrolled` declarations, and commented-out legacy auto-replay blocks in `website/js/main.js`.
+
+### B. Mobile Hero Alignment & Orphaned CSS Removal (`website/css/style.css`)
+- **Centered Mobile Hero at `@media (max-width: 768px)`**:
+  - Replace any conflicting or duplicated mobile hero rules with a single, clean specification without `!important` wars:
+    - `.hero-content`: centered column layout (`align-items: center; text-align: center;`).
+    - `.hero-title-wrap`: centered (`align-items: center; text-align: center; padding: 14px 12px;`).
+    - `.hero-role`: centered pill/subtitle (`font-size: 13px; margin-top: 16px;`).
+    - `.hero-bottom`: clean centered bottom tagline (`flex-direction: column; align-items: center; text-align: center; gap: 20px;`).
+- **Orphaned Selector Cleanup**:
+  - Remove unused/dead selectors (`.unused-override`, `.hero-ignored`, `.hero-role-extra`, `.work-card--frutiger-legacy`, `.cert-card-pdf`) and clean up any redundant property declarations.
 
 ---
 
-### 4. Technical Architecture & Data Strategy *(Technical Reference)*
+## 3. Privacy Protection, Link Hygiene & Asset Case Consistency (`website/index.html` & `website/js/main.js`)
 
-- **Architecture & Component Diagram**:
+### A. Protected Click-to-Reveal Phone Button in Contact Section
+- **Anti-Scraper Phone Protection**:
+  - Replace the plain-text phone number (`+48 516 494 524`) in the Contact section (`website/index.html`) with a sleek **Click-to-Reveal Phone** interactive control next to `"Warsaw, Poland"`:
+    - Default state: `Warsaw, Poland · [ Show Phone Number ]` (phone digits stored encoded in `data-p1` / `data-p2` / `data-p3` attributes so bots/scrapers cannot harvest raw text from HTML).
+    - On click: smoothly reveals the formatted number `+48 516 494 524` with a direct `tel:+48516494524` dial action and a one-click copy-to-clipboard confirmation.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     WORKS SECTION & SKY FLIGHT STAGE                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Header Row                                                             │
-│  ├─ Section Title ("Featured Projects")                                 │
-│  └─ High-Contrast Flight Hint + Inline Quick Grid Trigger               │
-│                                                                         │
-│  Sticky HR Command Bar (Flex Wrap / Responsive Two-Zone Layout)         │
-│  ├─ Category Tabs: All | Cinematic | Motion | Game | 3D | AI | Photo    │
-│  └─ View Switcher: [Sky Flight]  [Quick Grid]                           │
-│                                                                         │
-│  Dynamic HR Competency Banner                                           │
-│  ├─ Discipline Focus Readout                                            │
-│  └─ Key Software List (Comma + Space Formatted: "Tool A, Tool B, ...")  │
-├─────────────────────────────────────────────────────────────────────────┤
-│  6-Column Responsive Works Grid + Dynamic Row Centering Engine          │
-│  ├─ Full-Width Showcase Cards (span 6, 100% width, overscan centered)   │
-│  │   ├─ Amelie Trailer (Autoplay, Captions Off via API & Params)        │
-│  │   ├─ Cabinet of Memories (22s Loop, Centered Overscan)               │
-│  │   ├─ Frutiger Aero (Centered Full-Bleed Cover)                       │
-│  │   └─ 3D Coquette Room (100% Width Centered Slider Track)             │
-│  ├─ Horizontal Cards (span 3; if 1 in row -> centered in grid)          │
-│  │   ├─ Nature Photography (Slide 1: IMG_4443, followed by 5 landscapes)│
-│  │   └─ SYGMA Web Platform (Category: AI-Powered only)                  │
-│  └─ Vertical Cards (span 2; if 1 or 2 in row -> centered in grid)       │
-│      ├─ SYGMA TikTok Promo (Category: AI-Powered only)                  │
-│      ├─ What If Your Choice (Category: Motion Design only)              │
-│      └─ Portrait Photography (Slide 2: IMG_5050)                        │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Magnetic Scroll Focus Controller                                       │
-│  └─ Monitors scroll pause -> Gently aligns nearest row to viewport focus│
-└─────────────────────────────────────────────────────────────────────────┘
-```
+### B. LinkedIn URL Cleanup & Image Extension Verification
+- **Clean LinkedIn URLs**:
+  - Strip `?isSelfProfile=true` from LinkedIn links in both the Mobile Menu and the Contact section (`https://www.linkedin.com/in/anastasiia-pupyrina-7404501aa/`).
+- **Exact Case-Sensitive Asset Paths**:
+  - Audit all image `src` and `data-detail-images` paths in `website/index.html` against actual filenames in `/website/assets/` so `.JPG`, `.jpg`, and `.png` extensions match the filesystem on the first request without needing error-handler retries.
 
-- **Interactive Component & State Mapping**:
-  - **Showcase Video Loader**: Appends `cc_load_policy=0&iv_load_policy=3` to YouTube URLs and dispatches `unloadModule("captions")` + `unloadModule("cc")` postMessages on iframe load to ensure zero subtitle overlays on the Amelie trailer.
-  - **Dynamic Row Centering Helper**: Runs on initial load and after every category filter click. Inspects visible horizontal (`span 3`) and vertical (`span 2`) cards per row; applies centered column placement (`justify-self: center` for lone horizontal cards; centered columns `3 / span 2` for a single vertical card or `2 / span 2` and `4 / span 2` for a pair of vertical cards).
-  - **Magnetic Row Settle**: Listens for scroll deceleration in *Sky Flight* mode (ignored while dragging the timecode rail or in *Quick Grid* mode). When scrolling stops and a project row is within the magnetic capture window (`40px–210px` from the viewport focal center), smoothly scrolls the row into focus.
+---
+
+## 4. SEO, Social Sharing Cards, Favicon & Accessibility (`website/index.html` & `website/css/style.css`)
+
+### A. Complete OpenGraph, Twitter Cards, JSON-LD & Favicon
+- **Social Meta Tags**:
+  - Add `og:type` (`website`), `og:url`, `og:image` (`assets/bg_poster.jpg`), `og:image:alt`, `twitter:card` (`summary_large_image`), `twitter:title`, `twitter:description`, and `twitter:image`.
+  - Add a canonical `<link rel="canonical">` and Schema.org `Person` / `ProfilePage` JSON-LD structured data for search engines and recruiters.
+- **Custom SVG Favicon**:
+  - Add a crisp inline/local SVG favicon (`assets/favicon.svg` + `<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">`) featuring the editorial *"A ✦"* monogram matching the portfolio's palette.
+
+### B. Semantic Landmarks & Accessible Project Card Links
+- **Skip-to-Content & `<main>` Landmark**:
+  - Add an accessible `<a href="#main-content" class="skip-to-content">Skip to main content</a>` link at the top of `<body>` (visible on keyboard `:focus-visible`).
+  - Wrap the primary page flow (`#hero`, `.marquee`, `#works`, `#certificates`, `#about`, `#contact`) in `<main id="main-content">`.
+- **Replace `href="javascript:void(0)"` on Work Cards**:
+  - Replace all `<a href="javascript:void(0)" class="work-card-link">` attributes with meaningful `#project-<slug>` anchor hrefs (with `e.preventDefault()` in the modal click handlers) so right-click, status bar previews, screen readers, and SEO crawlers see clean semantic links instead of `javascript:void(0)`.

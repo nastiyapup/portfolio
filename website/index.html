@@ -35,14 +35,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anastasiia Pupyrina — Cinematographer &amp; Motion Designer</title>
     <meta name="description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
+    <meta name="author" content="Anastasiia Pupyrina">
+    <meta name="theme-color" content="#1c162c">
+    <link rel="canonical" href="https://ais-pre-j2pgnewdnwrsoyi6ew53sz-551602237945.europe-west3.run.app/">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Anastasiia Pupyrina Portfolio">
     <meta property="og:title" content="Anastasiia Pupyrina — Cinematographer &amp; Motion Designer">
     <meta property="og:description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
+    <meta property="og:url" content="https://ais-pre-j2pgnewdnwrsoyi6ew53sz-551602237945.europe-west3.run.app/">
+    <meta property="og:image" content="https://ais-pre-j2pgnewdnwrsoyi6ew53sz-551602237945.europe-west3.run.app/assets/bg_poster.jpg">
+    <meta property="og:image:alt" content="Anastasiia Pupyrina — Cinematographer &amp; Motion Designer Portfolio">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Anastasiia Pupyrina — Cinematographer &amp; Motion Designer">
+    <meta name="twitter:description" content="Portfolio of Anastasiia Pupyrina — cinematographer, motion designer, and visual storyteller based in Warsaw. Cinematic videos, 3D, motion graphics, game design, AI-powered content, and photography.">
+    <meta name="twitter:image" content="https://ais-pre-j2pgnewdnwrsoyi6ew53sz-551602237945.europe-west3.run.app/assets/bg_poster.jpg">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ProfilePage",
+      "mainEntity": {
+        "@type": "Person",
+        "name": "Anastasiia Pupyrina",
+        "jobTitle": "Cinematographer & Motion Designer",
+        "url": "https://ais-pre-j2pgnewdnwrsoyi6ew53sz-551602237945.europe-west3.run.app/",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Warsaw",
+          "addressCountry": "PL"
+        },
+        "alumniOf": {
+          "@type": "CollegeOrUniversity",
+          "name": "Polish-Japanese Academy of Information Technology (PJATK)"
+        },
+        "sameAs": [
+          "https://www.instagram.com/stacey.video/",
+          "https://www.tiktok.com/@asvoa",
+          "https://www.linkedin.com/in/anastasiia-pupyrina-7404501aa/?isSelfProfile=true",
+          "https://www.behance.net/cf2111d2"
+        ]
+      }
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
 
     <!-- ========== PRELOADER ========== -->
     <div class="preloader" id="preloader">
@@ -65,11 +113,11 @@
             var b = document.getElementById('preloaderProgress');
             if (!p || !c || !b) return;
             var n = 0;
-            var t = setInterval(function() {
+            window.__preloaderTimer = setInterval(function() {
                 n += 5;
                 if (n >= 100) {
                     n = 100;
-                    clearInterval(t);
+                    clearInterval(window.__preloaderTimer);
                     c.textContent = '100';
                     b.style.width = '100%';
                     p.classList.add('is-done');
@@ -92,10 +140,10 @@
 
     <!-- ========== SCROLL-DRIVEN DAY-TO-NIGHT BACKGROUND VIDEO ========== -->
     <div class="sky-bg" aria-hidden="true">
-        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" src="assets/BGvideo.mp4" muted playsinline webkit-playsinline preload="auto">
+        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" src="assets/BGvideo.mp4" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
             <source src="assets/BGvideo.mp4" type="video/mp4">
         </video>
-        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4" muted playsinline webkit-playsinline preload="auto">
+        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
             <source src="assets/BGmobile.mp4" type="video/mp4">
         </video>
         <div class="sky-cloud-tunnel" id="skyCloudTunnel"></div>
@@ -142,6 +190,7 @@
         </div>
     </div>
 
+    <main id="main-content">
     <!-- ========== HERO SECTION WITH 3D DISSOLVING CLOUDS ========== -->
     <section class="hero" id="hero">
         <!-- 3D Volumetric Clouds Stage (Dissolves outward as user scrolls down) -->
@@ -255,7 +304,7 @@
                     <span class="frame-corner frame-corner--bl"></span>
                     <span class="frame-corner frame-corner--br"></span>
                 </div>
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="OBMF8K280dk">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="OBMF8K280dk">
                     <div class="work-card-media" data-showcase-yt="OBMF8K280dk">
                         <img class="work-card-img" src="assets/Amelie/screenshots of movie/cover.jpg" alt="Amelie — Interactive Movie" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -285,7 +334,7 @@
 
             <!-- AMELIE — Good Ending (YouTube: 3FE6uAa_Yag | Preview starts at 11s) -->
             <article class="work-card" data-scroll-reveal-card data-category="cinematic">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="3FE6uAa_Yag" data-preview-start="11">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="3FE6uAa_Yag" data-preview-start="11">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/Amelie/screenshots of movie/BBB.00_00_57_11.Still003.jpg" alt="Amelie — Good Ending" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -299,7 +348,7 @@
 
             <!-- AMELIE — Bad Ending (YouTube: ZO1IkNWHdfg | Preview starts at 10s) -->
             <article class="work-card" data-scroll-reveal-card data-category="cinematic">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="ZO1IkNWHdfg" data-preview-start="10">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="ZO1IkNWHdfg" data-preview-start="10">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/Amelie/screenshots of movie/ACB.00_01_18_14.Still002.jpg" alt="Amelie — Bad Ending" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -322,7 +371,7 @@
                     <span class="frame-corner frame-corner--bl"></span>
                     <span class="frame-corner frame-corner--br"></span>
                 </div>
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="_yAEpan9KDk">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="_yAEpan9KDk">
                     <div class="work-card-media" data-showcase-yt="_yAEpan9KDk" data-preview-end="22">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/_yAEpan9KDk/maxresdefault.jpg" alt="Cabinet of Memories" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -355,7 +404,7 @@
                  English Tutor | What If Your Choice Changes the Ending? | Bakery | Portrait Photography
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="QLPmFjoWMt8">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="QLPmFjoWMt8">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/English tutor AD/image_2026-10-23_00-32-04.png" alt="English Tutor — Ad" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -378,7 +427,7 @@
             </article>
 
             <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="34cj_rteBO4">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="34cj_rteBO4">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/Screenshot 2026-10-23 003356.png" alt="What If Your Choice Changes the Ending?" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -401,7 +450,7 @@
             </article>
 
             <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="ai motion">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="_T0DeEQotzQ">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="_T0DeEQotzQ">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/AI used projects/Screenshot 2026-10-23 003742.png" alt="Bakery — AI Animation" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -425,7 +474,7 @@
 
             <!-- Portrait Photography (Vertical + Centered + Viewport-Only Smooth Slider) -->
             <article class="work-card work-card--vertical work-card--photo work-card--slider" data-scroll-reveal-card data-category="photography">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
+                <a href="#project-preview" class="work-card-link" data-cursor-view
                    data-image-src="assets/photography/people/IMG_7351-3.jpg"
                    data-detail-title="Portrait Photography"
                    data-detail-category="Portrait Photography &amp; Visual Studies — 2025"
@@ -471,7 +520,7 @@
                  (Motion + AI)
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide" data-scroll-reveal-card data-category="motion ai">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="E4YBRSmDyGI">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="E4YBRSmDyGI">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/LOSBEL/Screenshot 2026-10-23 004015.png" alt="LOSBEL — Anniversary Film" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -499,7 +548,7 @@
                  Dream Cave: uYzDC13Rn6g | Dionysus: 2pVu64L8-Ck
                  ════════════════════════════════════════ -->
             <article class="work-card" data-scroll-reveal-card data-category="game">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="uYzDC13Rn6g">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="uYzDC13Rn6g">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/uYzDC13Rn6g/maxresdefault.jpg" alt="Dream Cave" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -523,7 +572,7 @@
             </article>
 
             <article class="work-card" data-scroll-reveal-card data-category="game">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="2pVu64L8-Ck">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="2pVu64L8-Ck">
                     <div class="work-card-media">
                         <img class="work-card-img" src="assets/DIONYSUS/My project (3) 23.02.2026 18_03_25.png" alt="Dionysus — Interactive Simulation Game" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -551,7 +600,7 @@
                  Standard card size (span 6) with edge-to-edge stretched cover
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--frutiger-cover" data-scroll-reveal-card data-category="motion 3d">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="SSdUnnOFxc4">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="SSdUnnOFxc4">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/SSdUnnOFxc4/maxresdefault.jpg" alt="The Future We Were Promised" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -579,7 +628,7 @@
                  ════════════════════════════════════════ -->
             <!-- Paper Cut Animation: IfhutJtT75Q -->
             <article class="work-card" data-scroll-reveal-card data-category="motion">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="IfhutJtT75Q">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="IfhutJtT75Q">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/IfhutJtT75Q/maxresdefault.jpg" alt="Paper Cut Animation" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -603,7 +652,7 @@
 
             <!-- 63 Seconds: 4Z-Iuo2OkQM -->
             <article class="work-card" data-scroll-reveal-card data-category="cinematic">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-video data-yt-id="4Z-Iuo2OkQM">
+                <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="4Z-Iuo2OkQM">
                     <div class="work-card-media">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/4Z-Iuo2OkQM/maxresdefault.jpg" alt="63 Seconds — Museum of Warsaw Uprising" loading="lazy">
                         <div class="work-card-overlay"></div>
@@ -627,7 +676,7 @@
 
             <!-- Nature Photography (Full-Width Panoramic Smooth Slider) -->
             <article class="work-card work-card--wide work-card--photo work-card--slider" data-scroll-reveal-card data-category="photography">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
+                <a href="#project-preview" class="work-card-link" data-cursor-view
                    data-image-src="assets/photography/IMG_4443.JPG"
                    data-detail-title="Nature Photography"
                    data-detail-category="Nature Photography &amp; Visual Studies — 2025"
@@ -667,7 +716,7 @@
                  3D ART — 3D COQUETTE ROOM (Viewport-Only Smooth Slider)
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--wide work-card--photo work-card--slider" data-scroll-reveal-card data-category="3d">
-                <a href="javascript:void(0)" class="work-card-link" data-cursor-view
+                <a href="#project-preview" class="work-card-link" data-cursor-view
                    data-image-src="assets/room 3d/images3.jpg"
                    data-detail-title="3D Coquette Room — Echoes of Versailles"
                    data-detail-category="3D Environment Design &amp; Interior Modeling — 2025"
@@ -911,7 +960,18 @@
                     <span class="contact-email-text">nastiyapup@gmail.com</span>
                     <span class="contact-email-line"></span>
                 </a>
-                <div class="contact-info" data-scroll-reveal><span class="contact-location">Warsaw, Poland &nbsp;·&nbsp; +48 516 494 524</span></div>
+                <div class="contact-info" data-scroll-reveal>
+                    <span class="contact-location">Warsaw, Poland</span>
+                    <span class="contact-info-sep" aria-hidden="true">&nbsp;·&nbsp;</span>
+                    <button type="button" class="contact-phone-reveal-btn" id="revealPhoneBtn" data-magnetic aria-label="Reveal phone number">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <span id="revealPhoneText">Show Phone Number</span>
+                    </button>
+                    <span class="contact-phone-revealed is-hidden" id="revealedPhoneWrap">
+                        <a href="#" class="contact-phone-link" id="revealedPhoneLink"></a>
+                        <button type="button" class="contact-phone-copy" id="copyPhoneBtn" aria-label="Copy phone number">Copy</button>
+                    </span>
+                </div>
                 <div class="contact-socials" data-scroll-reveal>
                     <a href="https://www.instagram.com/stacey.video/" target="_blank" rel="noopener" class="social-link" data-magnetic>
                         <span>Instagram</span>
@@ -933,6 +993,7 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- ========== FOOTER ========== -->
     <footer class="footer">

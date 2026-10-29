@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2c1e42"/>
+      <stop offset="100%" stop-color="#161026"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe6c4"/>
+      <stop offset="100%" stop-color="#ffc4d6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#skyGrad)" stroke="rgba(255,226,188,0.35)" stroke-width="1.5"/>
+  <text x="27" y="45" font-family="Georgia, 'Instrument Serif', serif" font-style="italic" font-size="38" fill="url(#goldGrad)" text-anchor="middle">A</text>
+  <path d="M47 16 L49.2 21.8 L55 24 L49.2 26.2 L47 32 L44.8 26.2 L39 24 L44.8 21.8 Z" fill="#ffe2bc"/>
+</svg>

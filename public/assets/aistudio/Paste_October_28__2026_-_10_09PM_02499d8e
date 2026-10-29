@@ -1,0 +1,499 @@
+COMPREHENSIVE PORTFOLIO WEBSITE ANALYSIS — RAW FINDINGS
+
+I've read every line of all three files (index.html: 953 lines, style.css: 3230 lines, main.js: 1934 lines). Here is my exhaustive report:
+
+1. INDEX.HTML (953 lines, ~73KB)
+Meta Tags & SEO
+charset="UTF-8", viewport set correctly
+<title>: "Anastasiia Pupyrina — Cinematographer & Motion Designer"
+<meta name="description">: Full portfolio description mentioning Warsaw, cinematic videos, 3D, motion, game design, AI, photography
+Open Graph tags: og:title and og:description present
+MISSING: og:image, og:url, og:type, twitter:card, twitter:image — social media sharing will show no preview image
+MISSING: No <link rel="icon"> / favicon
+MISSING: No <html lang> direction or canonical URL
+CDN Dependencies
+Google Fonts (preconnect + stylesheet): Instrument Serif (ital 0;1), JetBrains Mono (300;400;500), Plus Jakarta Sans (300;400;500;600)
+GSAP 3.12.5 from cdnjs (gsap.min.js + ScrollTrigger.min.js) — loaded at end of body before main.js
+Inline Scripts (head)
+Lines 4-33: Compatibility shim for window.fetch — wraps fetch in a getter/setter via Object.defineProperty to handle browser extensions. Defensive, but unusual for a portfolio site. Possibly copy-pasted boilerplate.
+Lines 62-83: Inline preloader script (IIFE) — increments counter by 5 every 40ms, sets is-done class on preloader and is-loaded on body, hides preloader after 550ms. DUPLICATED — this exact logic is also in main.js initPreloader().
+Page Structure & All Sections
+1. PRELOADER (lines 48-59)
+Counter starting at 0 with % sign
+Progress bar
+Label: "LOADING EXPERIENCE"
+IDs: preloader, preloaderCounter, preloaderProgress
+2. CUSTOM CURSOR (lines 87-91)
+Dot + Circle + Text ("PLAY" default)
+ID: cursor, cursorText
+3. SCROLL-DRIVEN BACKGROUND VIDEO (lines 93-103)
+Fixed background with two video sources: assets/BGvideo.mp4 (desktop) and assets/BGmobile.mp4 (mobile)
+Both have <source> tag AND inline src attribute (redundant — src on <video> AND <source> child)
+Cloud tunnel div (skyCloudTunnel) and vignette overlay (skyBgVignette)
+aria-hidden="true" on container
+4. INTERACTIVE TIMECODE SCROLLBAR (lines 105-116)
+Custom scrollbar replacing native (right side)
+Shows time 00:00 to 23:59 bounds
+Track with progress bar, playhead with phase label ("DAWN") and readout ("00:00:00")
+aria-label="Interactive Day Timeline Scrollbar"
+5. NAVIGATION (lines 118-127)
+Fixed nav with logo "ANASTASIIA" linking to #hero
+Desktop links: Works, About, Contact (all data-magnetic)
+Hamburger button (2 spans) for mobile, aria-label="Toggle menu"
+6. MOBILE MENU (lines 129-143)
+Full-screen overlay with Works, About, Contact links
+Social links: Instagram (@stacey.video), TikTok (@asvoa), LinkedIn, Behance
+All external links have target="_blank" rel="noopener"
+7. HERO SECTION (lines 145-170)
+Full viewport, id="hero"
+3D volumetric clouds container (heroClouds3D)
+Hero title: "ANASTASIIA" (first line) + "Pupyrina" (italic/outline, second line)
+Role: "Cinematographer & Motion Designer"
+Tagline: "Visual storytelling through motion, 3D & video — Warsaw, Poland"
+Scroll indicator: "Fly through the day"
+8. MARQUEE TICKER (lines 172-187)
+aria-hidden="true"
+Items: MOTION DESIGN ✦ 3D ANIMATION ✦ VISUAL STORYTELLING ✦ GAME DESIGN ✦ AI CONTENT ✦ PHOTOGRAPHY ✦ CINEMATOGRAPHY (then repeated for seamless loop)
+9. SELECTED WORKS SECTION (lines 189-709)
+
+Section label: "01 — Selected Works" Heading: "Featured Projects" Hint text about scroll vs. Quick Grid mode
+
+Command Bar
+7 Category Filter Buttons: All, Cinematic & Film, Motion Design, Game Design, 3D Art, AI-Powered, Photography
+Using ARIA role="tablist" + role="tab" + aria-selected
+2 View Mode Buttons: Sky Flight (default active) and Quick Grid
+Using role="group" + aria-pressed
+Category Skill Banner
+Dynamic discipline focus + key software labels (updated by JS per filter)
+ALL PROJECT CARDS (14 total):
+
+AMELIE — Interactive Movie (SHOWCASE, wide)
+
+Category: cinematic
+YouTube: OBMF8K280dk
+Year: 2026
+Cover: assets/Amelie/screenshots of movie/cover.jpg
+Description: Interactive branching short film with two endings
+Detail tools: Canon EOS 250D, Premiere Pro, After Effects, Interactive Storytelling, VFX & Sound Design
+Detail videos: 2 YouTube embeds (Happy: 3FE6uAa_Yag, Tragic: ZO1IkNWHdfg)
+Detail images: 2 stills
+Has showreel-frame corner decoration
+Has data-showcase-yt for viewport autoplay
+
+Amelie — Good Ending (standard card)
+
+Category: cinematic, YouTube: 3FE6uAa_Yag, preview-start=11s
+Cover: assets/Amelie/screenshots of movie/BBB.00_00_57_11.Still003.jpg
+No Details button (no info-btn)
+
+Amelie — Bad Ending (standard card)
+
+Category: cinematic, YouTube: ZO1IkNWHdfg, preview-start=10s
+Cover: assets/Amelie/screenshots of movie/ACB.00_01_18_14.Still002.jpg
+No Details button
+
+Cabinet of Memories (SHOWCASE, wide)
+
+Category: motion ai
+YouTube: _yAEpan9KDk, preview-end=22s loop
+Year: 2026
+Cover: YouTube maxresdefault thumbnail
+Exhibition at Museum of Asia and the Pacific in Warsaw
+Tools: Stop-Motion Animation, After Effects, Photoshop, Fotoplastykon Projection, PJATK New Media Art
+External link: PJATK article
+Has showreel-frame corners
+
+English Tutor — Ad (VERTICAL card)
+
+Category: motion
+YouTube: QLPmFjoWMt8
+Year: 2025
+Cover: assets/English tutor AD/image_2026-10-23_00-32-04.png
+Tools: After Effects, Premiere Pro, Motion Graphics, Sound Design & SFX
+
+What If Your Choice Changes the Ending? (VERTICAL card)
+
+Category: motion
+YouTube: 34cj_rteBO4
+Year: 2026
+Cover: assets/Screenshot 2026-10-23 003356.png
+Creator introduction reel
+
+Bakery — AI Animation (VERTICAL card)
+
+Category: ai motion
+YouTube: _T0DeEQotzQ
+Year: 2025
+Cover: assets/AI used projects/Screenshot 2026-10-23 003742.png
+Tools: Google Veo, Nano Banana Pro, Flow, Premiere Pro, After Effects
+
+Portrait Photography (VERTICAL + SLIDER card)
+
+Category: photography
+9 photos in sliding gallery with dots
+data-cursor-view (not video — opens image modal)
+Photos: assets/photography/people/IMG_7351-3.jpg + 8 more Olivia series + others
+Tools: Canon EOS 250D, Photoshop, Lightroom, Portrait Retouching
+No Details button (detail data is on the link itself)
+
+LOSBEL — Anniversary Film (wide card)
+
+Category: motion ai
+YouTube: E4YBRSmDyGI
+Year: 2025
+Cover: assets/LOSBEL/Screenshot 2026-10-23 004015.png
+Commercial video for water filtration company
+
+Dream Cave (standard card)
+
+Category: game
+YouTube: uYzDC13Rn6g
+Year: 2025
+Cover: YouTube maxresdefault
+Interactive game with fairy wings, Unity, Duik Angela, Procreate, C#
+3 detail images
+
+DIONYSUS (standard card)
+
+Category: game
+YouTube: 2pVu64L8-Ck
+Year: 2026
+Papers Please-inspired luxury boutique gatekeeper game
+Unity, C#, Procreate, UI/UX
+3 detail images
+
+The Future We Were Promised (Frutiger Aero — standard card with special --frutiger-cover class)
+
+Category: motion 3d
+YouTube: SSdUnnOFxc4
+Year: 2025
+DodekaOTTO installation, Maya fish model, Substance Painter, TouchDesigner
+
+Paper Cut Animation (standard card)
+
+Category: motion
+YouTube: IfhutJtT75Q
+Year: 2025
+Stop-motion paper craft
+
+63 Seconds — Museum of Warsaw Uprising (standard card)
+
+Category: cinematic
+YouTube: 4Z-Iuo2OkQM
+Year: 2025
+63-second competition short film "Połączenia (Connections)"
+
+Nature Photography (wide SLIDER card)
+
+Category: photography
+8 nature photos with dots
+data-cursor-view, opens image modal
+Photos: assets/photography/IMG_4443.JPG + 7 more (.JPG extension — case-sensitive potential issue)
+
+3D Coquette Room (wide SLIDER card)
+
+Category: 3d
+4 images from assets/room 3d/
+18th-century Rocaille room in Maya
+Has both slider and Details button
+Tools: Autodesk Maya, Nano Banana Pro, 3D Modeling
+10. VIDEO MODAL (lines 711-723)
+Fullscreen YouTube iframe embed
+Close button, backdrop click, "Watch on YouTube ↗" fallback link
+aria-hidden="true" default
+11. IMAGE MODAL (lines 725-754)
+Full-size image with prev/next gallery navigation
+Zoom toggle on click
+"Open Original Full-Size ↗" link
+Side panel with title, category, description, tools
+Layout: 2-column grid (image + info)
+12. PROJECT DETAIL PANEL (lines 756-770)
+Slide-in drawer from right side
+Title, category, description, external link, tools, video iframes, images
+Dynamic content populated from data-detail-* attributes on buttons
+13. CERTIFICATES & ACHIEVEMENTS (lines 772-807)
+
+Section label: "✦ — Certificates & Achievements" 3 certificate cards:
+
+FLEX Program Alumni — US Dept of State exchange 2023-2024, image: assets/FLEX Alumni diploma.JPG
+Hackathon Distinction — "Tokyo Vibe, Warsaw Drive" at PJATK, May 2026, image: assets/hackathon Distinction.JPG
+IELTS Academic C1 (7.5) — with clickable PDF link to assets/201IH24016138-28-12-2024-ETRF.pdf, image: assets/ielts_certificate.jpg, Band scores: L8.5, R8.0, S7.5, W6.5
+14. ABOUT SECTION (lines 809-894)
+
+Section label: "02 — About" Heading: "Creating stories through motion"
+
+About Video: assets/introduction.mp4 with poster, muted, loop, playsinline. Unmute button toggles mute/unmute.
+
+Bio text (3 paragraphs):
+
+Warsaw-based, studying at PJATK
+Spans cinematic video, 3D animation, motion design, game prototyping, AI content
+FLEX alumna, ~1M TikTok likes
+Cross-cultural projects including US high school broadcast and DodekaOTTO in St. Pölten, Austria (Erasmus)
+
+Software & Tools (17 tags): After Effects, Premiere Pro, Photoshop, Illustrator, Lightroom, InDesign, Animate, Autodesk Maya, Blender, Cinema 4D, Substance 3D Painter, TouchDesigner, Unity, Theasys (360° VR), DaVinci Resolve, Procreate, Figma
+
+AI Tools (9 tags): Higgsfield, Google Veo, Topaz Video/Photo, Nano Banana Pro, Flow Studio, HeyGen (Avatars), ElevenLabs (Voice), Figma Make, Stable Diffusion
+
+Languages (6): English C1 (IELTS 7.5), Ukrainian (Native), Russian (Native), French B2, Polish B1, Japanese N4/A2
+
+15. CONTACT SECTION (lines 896-935)
+
+Section label: "03 — Contact" Heading: "Let's create something together"
+
+Email: nastiyapup@gmail.com (mailto link)
+Location: "Warsaw, Poland · +48 516 494 524" — ⚠️ PERSONAL PHONE NUMBER EXPOSED
+Social links: Instagram (@stacey.video), TikTok (@asvoa), LinkedIn, Behance — all with arrow SVG icons
+16. FOOTER (lines 937-946)
+"© 2026 Anastasiia Pupyrina"
+"Designed with ✦ passion"
+Back to top button with arrow SVG
+External Links Summary
+Instagram: https://www.instagram.com/stacey.video/
+TikTok: https://www.tiktok.com/@asvoa
+LinkedIn: https://www.linkedin.com/in/anastasiia-pupyrina-7404501aa/?isSelfProfile=true — ⚠️ isSelfProfile=true param should be removed
+Behance: https://www.behance.net/cf2111d2
+PJATK article: https://pja.edu.pl/animacje-studentow-pjatk-na-wystawie-w-muzeum-azji-i-pacyfiku/
+YouTube embeds: all via youtube-nocookie.com
+Commented-Out Code
+No commented-out HTML blocks in index.html (only section-divider comments like <!-- ========== HERO SECTION ========== -->)
+Accessibility
+ARIA labels on: menu button, timecode rail, filter tablist, view mode group, modal close buttons, image nav buttons, back-to-top
+aria-hidden="true" on: sky background, marquee, frame corners, slider dots, modals (toggled by JS)
+Missing: <main> landmark element, skip-to-content link, role="main" — entire page content lacks semantic landmark
+Issue: <a href="javascript:void(0)"> used on all work card links — poor accessibility and SEO
+2. STYLE.CSS (3230 lines, ~78KB)
+Custom Properties / Design Tokens (lines 7-37)
+--color-bg:          #1c162c  (dark plum)
+--color-bg-light:    rgba(255, 244, 248, 0.16)
+--color-bg-card:     rgba(255, 246, 250, 0.13)
+--color-bg-card-hover: rgba(255, 250, 252, 0.22)
+--color-text:        #fffdf9  (warm white)
+--color-text-dim:    rgba(255, 250, 246, 0.90)
+--color-text-muted:  rgba(255, 244, 240, 0.72)
+--color-accent:      #ffe2bc  (warm gold)
+--color-accent-2:    #ffc8d8  (soft pink)
+--color-accent-glow: rgba(255, 226, 188, 0.28)
+--color-border:      rgba(255, 255, 255, 0.28)
+--color-border-hover:rgba(255, 255, 255, 0.56)
+--sky-halo:          rgba(42, 28, 64, 0.34)
+--sky-glass-strong:  rgba(46, 34, 68, 0.32)
+
+Note: These are dynamically overridden by JS updateSkyPalette() as user scrolls (6-phase sky system).
+
+Typography
+--font-heading: 'Instrument Serif', 'Georgia', serif
+--font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif
+--font-mono: 'JetBrains Mono', 'SF Mono', monospace
+Body: 15.5px, weight 300, line-height 1.65
+Hero title: clamp(56px, 11.5vw, 168px)
+Section headings: clamp(42px, 6.5vw, 84px)
+Card titles: clamp(22px, 2.5vw, 30px)
+Layout Approach
+12-column CSS Grid for works section (grid-template-columns: repeat(12, 1fr))
+Standard cards: span 6, wide cards: span 12, vertical cards: span 3
+Flexbox for nav, footer, modals, tool tags
+Grid-area layout for About section (heading, visual, body)
+Container max-widths: min(1040px, 82vw) (standard), min(1150px, 84vw) (wide)
+Easing Variables
+--ease-out-expo:     cubic-bezier(0.16, 1, 0.3, 1)
+--ease-out-quart:    cubic-bezier(0.25, 1, 0.5, 1)
+--ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1)
+Animation/Transition Definitions
+scroll-pulse keyframes: pulsing scroll indicator (opacity/scaleY, 2s infinite)
+marquee-scroll keyframes: infinite horizontal marquee (translateX 0 → -50%, 12s linear)
+Preloader fade-out via is-done class
+Card image hover zoom: transform: scale(1.01) → scale(1.06) over 0.75s
+Scroll reveal: translateY(32px) opacity:0 → visible with 0.8s expo easing
+3D flight reveal: translate3d(0, 36px, -180px) scale(0.86) → normal
+Mobile Responsiveness
+Breakpoints:
+@media (hover: none): Hides custom cursor, resets cursor styles
+@media (max-width: 1024px):
+Grid goes to 2 columns
+About section single-column (heading → visual → body)
+Command bar stacks vertically
+@media (max-width: 768px):
+Nav height shrinks to 64px
+Desktop BG video hidden, mobile BG video shown
+Nav links hidden, hamburger shown
+Works padding reduced
+Command bar unstuck (position: relative)
+Hero scroll indicator hidden
+Hero uses 100svh
+Certificates: 2-column grid
+Contact socials stack vertically
+Footer stacks vertically
+Project detail panel: full width (100vw)
+@media (max-width: 480px):
+Works grid: single column
+All card variants forced to span 1
+Card descriptions hidden
+Certificates: single column
+Issues Found in CSS
+Duplicated/Conflicting Rules
+Lines 2918-2938 (.hero-bottom in 768px breakpoint): MASSIVE duplication/conflict — properties like bottom, left, right, align-items, text-align are set multiple times with !important overrides on top of each other. At least 7 redundant declarations.
+Lines 2940-2949 (.hero-tagline): text-align set twice (center then right with !important)
+Lines 2955-2968 (.hero-title-wrap): align-items set THREE times (center, center!important, flex-start), contradicting each other
+Lines 2970-2982 (.hero-title-wrap::before): height and filter each set twice in the same rule block (overriding themselves)
+Lines 3047-3052 (.hero-line-inner): text-align set twice
+Lines 3075-3092 (.hero-role): Multiple conflicting values, font-size set twice
+Lines 2989-3004: .hero rule then .hero-ignored rule — hero-ignored appears to be dead/abandoned CSS
+Lines 3006-3021 (.hero-content): align-items and text-align set multiple times contradicting
+Lines 3031-3046: Large commented-out block of .hero-title duplicate rules
+Lines 2877-2883: Commented-out fragment with dangling CSS
+Line 1311: .unused-override class — explicitly named as unused, dead CSS
+Lines 1438-1440: .work-card--frutiger-legacy — appears to be dead/orphaned class not used in HTML
+Orphaned CSS Rules
+.hero-role-extra (line 902) — not used anywhere in HTML
+.cert-card-pdf (line 2510) — not used in HTML (PDF is shown as an image with link, not embedded)
+.work-card-preview-iframe--vertical-cover (line 1477) — referenced in JS but via class name concatenation
+.filter-count (line 1153) — dynamically injected by JS, OK
+.work-card-hr-tools (line 1634) — dynamically injected by JS, OK
+Browser Scrollbar Hidden
+scrollbar-width: none + ::-webkit-scrollbar { display: none } — native scrollbar fully hidden, replaced by custom timecode scrollbar
+body { cursor: none } — custom cursor everywhere (disabled on touch devices via JS)
+Heavy Backdrop-Filter Usage
+backdrop-filter: blur() used on: nav, command bar, skill banner, all cards, about body, contact content, certificates, footer, timecode playhead, modals, unmute button, tool tags, lang tags, social links, cert badge — potential performance concern on lower-end devices, especially mobile
+3. MAIN.JS (1934 lines, ~72KB)
+Overall Architecture
+Single IIFE (function() { 'use strict'; ... })() — no modules/imports
+18 numbered initialization functions called from a central init() function
+Each module wrapped in try/catch for crash isolation
+Initializes on DOMContentLoaded or immediately if already loaded
+All Modules (18 total):
+1. initPreloader() (lines 85-132)
+Increments counter by 5 every 45ms (vs 40ms in inline script — INCONSISTENCY)
+Hard fail-safe: forces completion at 2200ms
+DUPLICATE: Inline script in HTML already does the same thing — creates a race condition where both timers run simultaneously
+2. initHeroEntrance() (lines 135-168)
+GSAP timeline: slides in hero lines, fades in role, tagline, scroll indicator
+Requires GSAP — gracefully skipped if not loaded
+3. initDayNightScrollExperience() (lines 171-468)
+Scroll-driven background video scrubbing (maps scroll position to video currentTime)
+6-phase sky color palette interpolation (DAWN → MORNING → HIGH NOON → GOLDEN HOUR → DUSK → MIDNIGHT)
+Custom timecode scrollbar with drag-to-scrub
+Updates CSS custom properties dynamically
+DEAD CODE at lines 306-334: if (false && bgVideo) — entire block will never execute, old single-video logic left behind
+DEAD CODE at lines 450-461: Another if (false && bgVideo) block — same issue
+DUPLICATE VARIABLE: var hasUserScrolled = false; declared at both line 186 AND line 418 — the second var re-declares it (no error due to hoisting, but confusing)
+Uses requestAnimationFrame in a perpetual loop (tickDayNight calls itself)
+4. initLetterbox() (lines 471-577)
+Creates 3D cloud tunnel wisps and hero foreground mist
+Forward-flight camera effect on hero (scale, translateZ, blur, opacity based on scroll)
+Continuous cloud wisp cycling parallax
+Adds scroll listener → requestAnimationFrame
+5. initCursor() (lines 580-660)
+Custom cursor with lerp-based smooth following (0.15 factor)
+Touch device detection → hides cursor entirely
+States: is-hovering (links/buttons), is-video (PLAY text), is-view (VIEW text), is-scrub (DRAG text), is-hidden
+Uses permanent requestAnimationFrame loop
+6. initMagneticButtons() (lines 663-693)
+GSAP-powered magnetic effect on [data-magnetic] elements
+Mouse-following with elastic snap-back
+Requires GSAP
+7. initNavigation() (lines 696-728)
+Hide-on-scroll-down, show-on-scroll-up pattern
+Adds is-scrolled class at 80px for glass background
+Uses rAF throttling via ticking flag — good pattern
+8. initMobileMenu() (lines 731-748)
+Toggle hamburger and mobile menu overlay
+Auto-close menu when any link is clicked
+9. initScrollReveal() (lines 751-944)
+ScrollTrigger-based reveal for [data-scroll-reveal] elements
+Cards immediately set to is-visible (no stagger — instant visibility)
+3D spatial flight engine: continuously updates card transforms based on viewport position
+Cards below viewport: scale down, blur, translate back on Z-axis
+Cards in view: full opacity, crisp
+Cards above viewport: slight scale up, translate forward
+Magnetic scroll focus assist: after scroll stops (150ms), gently snaps nearest card row to center of viewport
+Hover override: clear blur/opacity on hovered card
+10. initVideoHover() (lines 948-1074)
+Showcase cards with data-showcase-yt: IntersectionObserver creates/removes YouTube iframes when visible/hidden (threshold 0.22, rootMargin 80px)
+Regular video cards: 280ms hover delay before creating YouTube preview iframe, remove on mouseleave
+All iframes use youtube-nocookie.com/embed/ with max quality params
+Loop timer for showcase cards with data-preview-end: seekTo(0) + playVideo every N seconds
+Window message listener (lines 1041-1064): Auto-replays ended YouTube videos via postMessage API
+DEAD COMMENTED-OUT CODE (lines 1075-1093): Large block of commented-out duplicate auto-replay logic, old version
+10B. initConstantSliders() (lines 1094-1156)
+Viewport-triggered image sliders on .work-card--slider cards
+IntersectionObserver at 0.25 threshold starts/stops auto-advance
+2800ms interval between slides
+GPU-accelerated: translate3d on track
+Updates data-image-src on link for image modal integration
+11. initAboutIntroVideo() (lines 1158-1197)
+IntersectionObserver plays/pauses about video based on visibility (0.25 threshold)
+Unmute/mute toggle button with emoji icon swap (🔊/🔇)
+12. initVideoModal() (lines 1199-1258)
+Opens fullscreen YouTube iframe embed on card click
+Sets body overflow hidden
+Close via: button, backdrop click, Escape key, click on modal itself
+requestHighestYouTubeQuality() called on modal iframe
+13. initImageModal() (lines 1260-1434)
+Opens image modal with gallery navigation for photography cards
+Pulls gallery sources from slider track images if multiple
+Prev/Next via buttons or Arrow keys
+Click-to-zoom toggle on image
+Populates title, category, description, tools from data-detail-* attributes
+Image fallback system via attachImageFallback()
+Counter display (e.g., "3 / 9")
+14. initProjectDetail() (lines 1436-1582)
+Slide-in panel drawer from right
+Dynamically creates YouTube iframes and images from comma-separated data-detail-* strings
+Handles URL format variations: youtu.be, youtube.com/shorts/, watch?v=
+Clears iframe src on close to stop playback
+Close via: button, backdrop, Escape key
+15. initCategoryFilter() (lines 1584-1813)
+Category filtering via data-category attributes (space-separated for multi-category cards)
+Injects HR tool/skill summary strips into every card for Quick Grid scanning
+Populates filter count badges on each button
+Updates skill banner with category-specific focus text and tools
+Grid row centering logic: detects lone cards in a row and applies centering classes
+View mode switcher (Sky Flight ↔ Quick Grid)
+Inline grid trigger button text toggles
+16. initSmoothScroll() (lines 1815-1836)
+Intercepts #anchor clicks, scrolls smoothly with 80px offset (for fixed nav)
+17. initBackToTop() (lines 1838-1850)
+Smooth scroll to top on button click
+18. initMarqueeSpeed() (lines 1852-1884)
+Dynamically adjusts marquee animation playbackRate based on scroll velocity
+Range: 1.6x to 3.2x speed
+Uses permanent rAF loop + scroll listener
+Velocity dampens at 0.9x per frame
+Helper Functions
+qs() / qsa(): querySelector shortcuts
+lerp() / clamp(): Math utilities
+hasGSAP() / hasScrollTrigger(): Feature detection
+requestHighestYouTubeQuality(): Posts quality commands via postMessage to YouTube iframes (4K→1440→1080→highres), with optional caption disabling
+attachImageFallback(): 2-step fallback for images — step 0: try alternate case extension (.jpg↔.JPG, .png↔.PNG, or maxresdefault→hqdefault), step 1: try flattened path (assets/subfolder/file → assets/file)
+Performance Concerns
+3 perpetual requestAnimationFrame loops running simultaneously: cursor tracking, day/night tick, marquee speed. These run even when not needed (cursor tracks even when cursor isn't moving, marquee updates even when not in view)
+Multiple scroll event listeners: at least 5 separate scroll listeners (computeScrollProgress, updateFlightCamera, onScroll/nav, updateSpatialFlightRows + magnetic timer, onScroll/marquee)
+No debounce/throttle on most scroll handlers (though rAF is used as a partial throttle in some)
+YouTube iframe creation on hover: each hover creates a full iframe load — could be heavy on bandwidth
+Heavy backdrop-filter usage in CSS compound this
+Error Handling
+Central init: each module wrapped in try/catch with console.error
+GSAP-dependent functions check hasGSAP() / hasScrollTrigger() before executing
+Video operations wrapped in try/catch
+setPointerCapture / releasePointerCapture wrapped in try/catch
+Image fallback handler for broken images
+Dead/Commented-Out Code Summary
+Lines 306-334: if (false && bgVideo) — dead legacy single-video code
+Lines 450-461: if (false && bgVideo) — dead legacy single-video code
+Lines 1075-1093: Commented-out duplicate auto-replay logic
+Line 418: Duplicate var hasUserScrolled declaration
+CSS .unused-override, .hero-ignored, .hero-role-extra, .work-card--frutiger-legacy, .cert-card-pdf — orphaned rules
+SUMMARY OF KEY ISSUES
+Duplicate preloader logic — inline script AND JS module both run, racing each other
+Dead code blocks — if (false && ...) blocks and commented-out JS sections should be cleaned
+CSS duplication nightmare in 768px breakpoint — hero-bottom, hero-tagline, hero-title-wrap, hero-content all have massively duplicated/conflicting properties with !important fights
+Missing OG/social meta tags — no og:image, twitter:card
+Missing favicon
+Personal phone number exposed in contact section
+LinkedIn URL has ?isSelfProfile=true — should be removed
+javascript:void(0) hrefs — all work card links use this, bad for SEO/accessibility
+Performance: 3 permanent rAF loops + 5 scroll listeners + heavy backdrop-filter usage
+No <main> landmark or skip navigation
+Inconsistent image extensions (.JPG vs .jpg) — handled by fallback JS but fragile
+Variable hasUserScrolled declared twice in same function scope

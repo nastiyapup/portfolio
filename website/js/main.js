@@ -81,11 +81,36 @@
     });
   }
 
+  // ─── SHARED PASSIVE SCROLL PIPELINE (SINGLE LISTENER) ─────
+  const scrollSubscribers = [];
+  let scrollRafPending = false;
+  window.addEventListener('scroll', function () {
+    if (!scrollRafPending) {
+      scrollRafPending = true;
+      requestAnimationFrame(function () {
+        scrollRafPending = false;
+        const y = window.scrollY;
+        for (let i = 0; i < scrollSubscribers.length; i++) {
+          scrollSubscribers[i](y);
+        }
+      });
+    }
+  }, { passive: true });
+
+  function onPassiveScroll(fn) {
+    scrollSubscribers.push(fn);
+  }
+
   // ─── 1. CRASH-PROOF PRELOADER ─────────────────────────────
   function initPreloader() {
     const preloader  = qs('#preloader') || qs('.preloader');
     const counter    = qs('#preloaderCounter') || qs('.preloader-counter');
     const progressEl = qs('#preloaderProgress') || qs('.preloader-progress');
+
+    if (window.__preloaderTimer) {
+      clearInterval(window.__preloaderTimer);
+      window.__preloaderTimer = null;
+    }
 
     if (!preloader || preloader.classList.contains('is-done')) {
       initHeroEntrance();
@@ -93,7 +118,7 @@
     }
 
     let finished = false;
-    let current = 0;
+    let current = parseInt(counter ? counter.textContent : '0', 10) || 0;
 
     function completePreloader() {
       if (finished) return;
@@ -278,19 +303,37 @@
       rootStyle.setProperty('--sky-halo', `rgba(${Math.round(hlo[0])}, ${Math.round(hlo[1])}, ${Math.round(hlo[2])}, ${hlo[3].toFixed(3)})`);
     }
 
-    [bgVideo, bgMobileVideo].filter(Boolean).forEach(function (v) {
+    const allBgVideos = [bgVideo, bgMobileVideo].filter(Boolean);
+
+    // If BGmobile.mp4 fails to load or is empty on mobile, fall back cleanly to desktop BGvideo.mp4
+    if (bgMobileVideo && bgVideo) {
+      const fallbackToDesktopVideo = function () {
+        if (!bgMobileVideo.duration || !isFinite(bgMobileVideo.duration)) {
+          bgMobileVideo.style.display = 'none';
+          bgVideo.style.display = 'block';
+        }
+      };
+      bgMobileVideo.addEventListener('error', fallbackToDesktopVideo);
+      const mobileSrc = qs('source', bgMobileVideo);
+      if (mobileSrc) mobileSrc.addEventListener('error', fallbackToDesktopVideo);
+    }
+
+    allBgVideos.forEach(function (v) {
       v.muted = true;
+      v.defaultMuted = true;
+      v.autoplay = false;
+      v.loop = false;
       v.setAttribute('playsinline', '');
       v.setAttribute('webkit-playsinline', '');
-      try { v.load(); } catch (e) {}
 
       const onVReady = function () {
         if (v.duration && isFinite(v.duration)) {
           videoDuration = v.duration;
         }
         try {
-          if (v.currentTime === 0) {
-            v.pause();
+          v.pause();
+          if (!hasUserScrolled && window.scrollY <= 36) {
+            v.currentTime = 0;
           }
         } catch (e) {}
       };
@@ -303,50 +346,34 @@
       try { v.pause(); } catch (e) {}
     });
 
-    if (false && bgVideo) {
-      bgVideo.muted = true;
-      bgVideo.setAttribute('playsinline', '');
-      bgVideo.setAttribute('webkit-playsinline', '');
-
-      const onVideoReady = function () {
-        if (bgVideo.duration && isFinite(bgVideo.duration)) {
-          videoDuration = bgVideo.duration;
-        }
-        try {
-          if (bgVideo.currentTime === 0) {
-            bgVideo.pause();
-          }
-        } catch (e) {}
-      };
-
-      bgVideo.addEventListener('loadedmetadata', onVideoReady);
-      bgVideo.addEventListener('canplay', onVideoReady);
-      if (bgVideo.readyState >= 1) {
-        onVideoReady();
-      }
-
-      const primePromise = null; try { bgVideo.pause(); } catch (e) {}
-      if (primePromise && typeof primePromise.then === 'function') {
-        primePromise.then(function () {
-          bgVideo.pause();
-        }).catch(function () {});
+    let dayNightRaf = null;
+    function startDayNightTick() {
+      if (!dayNightRaf) {
+        dayNightRaf = requestAnimationFrame(tickDayNight);
       }
     }
 
     function computeScrollProgress() {
-      if (window.scrollY > 2) hasUserScrolled = true;
+      const scrollY = window.scrollY;
+      if (scrollY > 36) hasUserScrolled = true;
       if (isDraggingTrack) return;
       const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
-      targetProgress = clamp(window.scrollY / maxScroll, 0, 1);
+      // 36px top deadzone prevents micro-jitter of frame 0 at the top of the page
+      if (scrollY <= 36) {
+        targetProgress = 0;
+      } else {
+        targetProgress = clamp((scrollY - 36) / Math.max(maxScroll - 36, 1), 0, 1);
+      }
+      startDayNightTick();
     }
 
-    window.addEventListener('scroll', computeScrollProgress, { passive: true });
+    onPassiveScroll(computeScrollProgress);
     window.addEventListener('resize', computeScrollProgress, { passive: true });
-    computeScrollProgress();
 
     // ── Interactive Scrub & Drag on the Timecode Rail ──
     function scrubToEvent(e) {
       if (!trackEl) return;
+      hasUserScrolled = true;
       const rect = trackEl.getBoundingClientRect();
       if (rect.height <= 0) return;
       const clientY = (e.clientY != null) ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
@@ -355,6 +382,7 @@
       const targetY = ratio * maxScroll;
 
       targetProgress = ratio;
+      startDayNightTick();
       if (isDraggingTrack) {
         window.scrollTo(0, targetY);
       } else {
@@ -389,6 +417,7 @@
         } catch (err) {}
         railEl.classList.remove('is-dragging');
         document.body.classList.remove('is-scrubbing');
+        startDayNightTick();
       };
 
       trackEl.addEventListener('pointerup', onPointerEnd);
@@ -415,11 +444,24 @@
       return 'MIDNIGHT';
     }
 
-    var hasUserScrolled = false;
     let lastPaletteProgress = -1;
+    let lastSeekTime = 0;
 
-    function tickDayNight() {
+    function getActiveVideo() {
+      if (bgMobileVideo && bgMobileVideo.offsetParent !== null && bgMobileVideo.duration && isFinite(bgMobileVideo.duration)) {
+        return bgMobileVideo;
+      }
+      if (bgVideo && bgVideo.duration && isFinite(bgVideo.duration)) {
+        return bgVideo;
+      }
+      return null;
+    }
+
+    function tickDayNight(now) {
       smoothProgress = isDraggingTrack ? targetProgress : lerp(smoothProgress, targetProgress, 0.14);
+      if (Math.abs(targetProgress - smoothProgress) < 0.00015) {
+        smoothProgress = targetProgress;
+      }
 
       const pct = (smoothProgress * 100).toFixed(2) + '%';
       if (progressEl) progressEl.style.height = pct;
@@ -432,39 +474,34 @@
         lastPaletteProgress = smoothProgress;
       }
 
-      [bgVideo, bgMobileVideo].filter(Boolean).forEach(function (v) {
-        if (v.readyState >= 1 && !v.seeking) {
-          const vDur = (v.duration && isFinite(v.duration)) ? v.duration : videoDuration;
-          const desiredTime = clamp(smoothProgress * vDur, 0, Math.max(vDur - 0.05, 0));
-          if ((hasUserScrolled || isDraggingTrack || smoothProgress > 0.005) && Math.abs(v.currentTime - desiredTime) > 0.03) {
-            try {
-              if (typeof v.fastSeek === 'function') {
-                v.fastSeek(desiredTime);
-              } else {
-                v.currentTime = desiredTime;
-              }
-            } catch (e) {}
-          }
-        }
-      });
-      if (false && bgVideo && bgVideo.readyState >= 1 && !bgVideo.seeking) {
-        const desiredTime = clamp(smoothProgress * videoDuration, 0, Math.max(videoDuration - 0.05, 0));
-        if ((hasUserScrolled || isDraggingTrack || smoothProgress > 0.005) && Math.abs(bgVideo.currentTime - desiredTime) > 0.03) {
+      const activeVid = getActiveVideo();
+      const ts = now || performance.now();
+      if (activeVid && activeVid.readyState >= 1 && !activeVid.seeking && (ts - lastSeekTime > 42)) {
+        const vDur = (activeVid.duration && isFinite(activeVid.duration)) ? activeVid.duration : videoDuration;
+        const desiredTime = clamp(smoothProgress * vDur, 0, Math.max(vDur - 0.05, 0));
+        if ((hasUserScrolled || isDraggingTrack) && Math.abs(activeVid.currentTime - desiredTime) > 0.06) {
+          lastSeekTime = ts;
           try {
-            if (typeof bgVideo.fastSeek === 'function') {
-              bgVideo.fastSeek(desiredTime);
+            if (typeof activeVid.fastSeek === 'function' && isDraggingTrack) {
+              activeVid.fastSeek(desiredTime);
             } else {
-              bgVideo.currentTime = desiredTime;
+              activeVid.currentTime = desiredTime;
             }
           } catch (e) {}
         }
       }
 
-      requestAnimationFrame(tickDayNight);
+      if (Math.abs(targetProgress - smoothProgress) > 0.00015 || isDraggingTrack) {
+        dayNightRaf = requestAnimationFrame(tickDayNight);
+      } else {
+        dayNightRaf = null;
+      }
     }
 
     updateSkyPalette(0);
-    requestAnimationFrame(tickDayNight);
+    if (window.scrollY > 36) {
+      computeScrollProgress();
+    }
   }
 
   // ─── 4. 3D CLOUD TUNNEL & HERO FORWARD-FLIGHT ZOOM ────────
@@ -569,9 +606,7 @@
       }
     }
 
-    window.addEventListener('scroll', function () {
-      requestAnimationFrame(updateFlightCamera);
-    }, { passive: true });
+    onPassiveScroll(updateFlightCamera);
     window.addEventListener('resize', updateFlightCamera, { passive: true });
     updateFlightCamera();
   }
@@ -590,11 +625,26 @@
     let mouseY = 0;
     let cursorX = 0;
     let cursorY = 0;
+    let cursorRaf = null;
+
+    function moveCursor() {
+      cursorX = lerp(cursorX, mouseX, 0.15);
+      cursorY = lerp(cursorY, mouseY, 0.15);
+      cursor.style.transform = 'translate3d(' + cursorX.toFixed(1) + 'px, ' + cursorY.toFixed(1) + 'px, 0)';
+      if (Math.abs(mouseX - cursorX) > 0.15 || Math.abs(mouseY - cursorY) > 0.15) {
+        cursorRaf = requestAnimationFrame(moveCursor);
+      } else {
+        cursorRaf = null;
+      }
+    }
 
     document.addEventListener('mousemove', function (e) {
       mouseX = e.clientX;
       mouseY = e.clientY;
-    });
+      if (!cursorRaf) {
+        cursorRaf = requestAnimationFrame(moveCursor);
+      }
+    }, { passive: true });
 
     document.addEventListener('mouseleave', function () {
       cursor.classList.add('is-hidden');
@@ -603,14 +653,6 @@
     document.addEventListener('mouseenter', function () {
       cursor.classList.remove('is-hidden');
     });
-
-    function moveCursor() {
-      cursorX = lerp(cursorX, mouseX, 0.15);
-      cursorY = lerp(cursorY, mouseY, 0.15);
-      cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0)';
-      requestAnimationFrame(moveCursor);
-    }
-    requestAnimationFrame(moveCursor);
 
     const hoverTargets = qsa('a, button, [data-magnetic]');
     hoverTargets.forEach(function (el) {
@@ -698,33 +740,22 @@
     if (!nav) return;
 
     let lastScrollY = 0;
-    let ticking = false;
 
-    function onScroll() {
-      if (!ticking) {
-        requestAnimationFrame(function () {
-          const currentY = window.scrollY;
-
-          if (currentY > 80) {
-            nav.classList.add('is-scrolled');
-          } else {
-            nav.classList.remove('is-scrolled');
-          }
-
-          if (currentY > lastScrollY && currentY > 80) {
-            nav.classList.add('is-hidden');
-          } else {
-            nav.classList.remove('is-hidden');
-          }
-
-          lastScrollY = currentY;
-          ticking = false;
-        });
-        ticking = true;
+    onPassiveScroll(function (currentY) {
+      if (currentY > 80) {
+        nav.classList.add('is-scrolled');
+      } else {
+        nav.classList.remove('is-scrolled');
       }
-    }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+      if (currentY > lastScrollY && currentY > 80) {
+        nav.classList.add('is-hidden');
+      } else {
+        nav.classList.remove('is-hidden');
+      }
+
+      lastScrollY = currentY;
+    });
   }
 
   // ─── 8. MOBILE MENU ───────────────────────────────────────
@@ -933,13 +964,13 @@
       requestAnimationFrame(updateSpatialFlightRows);
     };
 
-    window.addEventListener('scroll', function () {
-      requestAnimationFrame(updateSpatialFlightRows);
+    onPassiveScroll(function () {
+      updateSpatialFlightRows();
       if (!isMagnetGliding) {
         clearTimeout(magnetTimer);
         magnetTimer = setTimeout(triggerMagneticRowFocus, 150);
       }
-    }, { passive: true });
+    });
     window.addEventListener('resize', refreshFlightCards, { passive: true });
     refreshFlightCards();
   }
@@ -947,6 +978,39 @@
   // ─── 10. VIEWPORT-ONLY SHOWCASE AUTOPLAY & HOVER PREVIEWS ──
   function initVideoHover() {
     qsa('.work-card-img').forEach(attachImageFallback);
+
+    function createCleanPreviewIframe(ytId, startSec, endSec, isVerticalCover) {
+      const iframe = document.createElement('iframe');
+      iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
+      const startParam = startSec > 0 ? `&start=${startSec}` : '';
+      const endParam = endSec > 0 ? `&end=${endSec}` : '';
+      iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&cc_load_policy=0&iv_load_policy=3&vq=hd2160${startParam}${endParam}`;
+      iframe.setAttribute('allow', 'autoplay; encrypted-media');
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('tabindex', '-1');
+      iframe.setAttribute('aria-hidden', 'true');
+      requestHighestYouTubeQuality(iframe, true);
+
+      iframe.addEventListener('load', function () {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'addEventListener',
+              args: ['onStateChange']
+            }), '*');
+          }
+        } catch (err) {}
+        setTimeout(function () {
+          if (iframe.parentNode) {
+            iframe.classList.add('is-playing');
+          }
+        }, 900);
+      });
+
+      return iframe;
+    }
 
     const showcaseMedias = qsa('[data-showcase-yt]');
 
@@ -960,13 +1024,7 @@
 
           if (entry.isIntersecting) {
             if (!qs('.work-card-preview-iframe', media)) {
-              const iframe = document.createElement('iframe');
-              iframe.className = 'work-card-preview-iframe' + (isVerticalCover ? ' work-card-preview-iframe--vertical-cover' : '');
-              const endParam = endSec > 0 ? `&end=${endSec}` : '';
-              iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&cc_load_policy=0&iv_load_policy=3&vq=hd2160${endParam}`;
-              iframe.setAttribute('allow', 'autoplay; encrypted-media');
-              iframe.setAttribute('frameborder', '0');
-              requestHighestYouTubeQuality(iframe, true);
+              const iframe = createCleanPreviewIframe(ytId, 0, endSec, isVerticalCover);
               media.appendChild(iframe);
 
               if (endSec > 0) {
@@ -1019,14 +1077,9 @@
       card.addEventListener('mouseenter', function () {
         hoverTimeout = setTimeout(function () {
           if (qs('.work-card-preview-iframe', media)) return;
-          const iframe = document.createElement('iframe');
-          iframe.className = 'work-card-preview-iframe';
-          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&cc_load_policy=0&iv_load_policy=3&vq=hd2160&start=${startSec}`;
-          iframe.setAttribute('allow', 'autoplay; encrypted-media');
-          iframe.setAttribute('frameborder', '0');
-          requestHighestYouTubeQuality(iframe, true);
+          const iframe = createCleanPreviewIframe(ytId, startSec, 0, false);
           media.appendChild(iframe);
-        }, 280);
+        }, 240);
       });
 
       card.addEventListener('mouseleave', function () {
@@ -1035,16 +1088,20 @@
         if (iframe) iframe.remove();
       });
     });
-  }
 
-    // ── Auto-replay YouTube showcase & preview videos on loop ──
+    // ── Auto-replay YouTube showcase & preview videos on loop and fade in on play ──
     window.addEventListener('message', function (e) {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (!data) return;
-        const isEnded = (data.event === 'onStateChange' && (data.info === 0 || data.info === '0')) ||
-                        (data.info && (data.info.playerState === 0 || data.info.playerState === '0'));
-        if (isEnded) {
+        const state = (data.event === 'onStateChange') ? data.info : (data.info && data.info.playerState);
+        if (state === 1 || state === '1') {
+          qsa('.work-card-preview-iframe').forEach(function (iframe) {
+            if (iframe.contentWindow === e.source) {
+              iframe.classList.add('is-playing');
+            }
+          });
+        } else if (state === 0 || state === '0') {
           if (e.source) {
             try {
               e.source.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*');
@@ -1072,25 +1129,7 @@
         } catch (err) {}
       });
     });
-    /*
-        } catch (err) {}
-      });
-    });
-      try {
-        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (data && data.event === 'onStateChange' && data.info === 0) {
-          qsa('.work-card-preview-iframe').forEach(function (iframe) {
-            if (iframe.contentWindow) {
-              iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [0, true] }), '*');
-              iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: '' }), '*');
-            }
-          });
-        }
-      } catch (err) {}
-    });
   }
-
-  */
   // ─── 10B. VIEWPORT-ONLY GPU-ACCELERATED IMAGE SLIDERS ─────
   function initConstantSliders() {
     qsa('.work-card-img, .work-card-slide-img').forEach(attachImageFallback);
@@ -1587,7 +1626,7 @@
     const filterBtns    = qsa('.filter-btn');
     const grid          = qs('.works-grid');
     const workCards     = qsa('.work-card');
-    const gridBreak     = qs('.works-grid-break');
+    const gridBreaks    = qsa('.works-grid-break');
     const skillFocusEl  = qs('#categorySkillFocus');
     const skillToolsEl  = qs('#categorySkillTools');
     const viewModeBtns  = qsa('.view-mode-btn');
@@ -1676,14 +1715,15 @@
       }
     }
 
-    // Center lone horizontal or vertical cards when they are the only item (or pair) in a row
+    // Center lone horizontal or vertical cards when they are the only item (or pair/triple) in a row
     function updateGridRowCentering() {
       workCards.forEach(function (card) {
         card.classList.remove(
           'is-row-single-horizontal',
           'is-row-single-vertical',
           'is-row-pair-vertical-first',
-          'is-row-pair-vertical-second'
+          'is-row-pair-vertical-second',
+          'is-row-triple-vertical'
         );
       });
 
@@ -1691,7 +1731,7 @@
         return !c.classList.contains('is-hidden');
       });
 
-      // 1. Check contiguous runs of standard horizontal cards (span 3)
+      // 1. Check contiguous runs of standard horizontal cards (span 6)
       let currentHorizRun = [];
       function flushHorizRun() {
         if (currentHorizRun.length % 2 === 1) {
@@ -1711,16 +1751,25 @@
       });
       flushHorizRun();
 
-      // 2. Check visible vertical cards (span 2 -> 3 per row)
+      // 2. Check visible vertical cards (span 3 -> 4 per row in 12-col grid)
       const visibleVerticals = visibleCards.filter(function (c) {
         return c.classList.contains('work-card--vertical');
       });
+
+      gridBreaks.forEach(function (gb) {
+        gb.style.display = visibleVerticals.length > 0 ? 'block' : 'none';
+      });
+
       const rem = visibleVerticals.length % 4;
       if (rem === 1) {
         visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-single-vertical');
       } else if (rem === 2) {
         visibleVerticals[visibleVerticals.length - 2].classList.add('is-row-pair-vertical-first');
         visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-pair-vertical-second');
+      } else if (rem === 3) {
+        visibleVerticals[visibleVerticals.length - 3].classList.add('is-row-triple-vertical');
+        visibleVerticals[visibleVerticals.length - 2].classList.add('is-row-triple-vertical');
+        visibleVerticals[visibleVerticals.length - 1].classList.add('is-row-triple-vertical');
       }
     }
 
@@ -1732,8 +1781,10 @@
       btn.addEventListener('click', function () {
         filterBtns.forEach(function (b) {
           b.classList.remove('is-active');
+          b.setAttribute('aria-selected', 'false');
         });
         btn.classList.add('is-active');
+        btn.setAttribute('aria-selected', 'true');
 
         const filter = btn.getAttribute('data-filter') || 'all';
         updateSkillBanner(filter);
@@ -1748,17 +1799,12 @@
           } else {
             card.classList.add('is-hidden');
           }
-
-          if (filter === 'all') {
-            card.style.order = '';
-          } else {
-            card.style.order = '';
-          }
+          card.style.order = '';
         });
 
-        if (gridBreak) {
-          gridBreak.style.order = '';
-        }
+        gridBreaks.forEach(function (gb) {
+          gb.style.order = '';
+        });
 
         updateGridRowCentering();
 
@@ -1819,7 +1865,7 @@
     links.forEach(function (link) {
       link.addEventListener('click', function (e) {
         const hash = link.getAttribute('href');
-        if (hash === '#' || hash === '') return;
+        if (!hash || hash === '#' || hash === '#project-preview') return;
 
         const target = qs(hash);
         if (!target) return;
@@ -1849,21 +1895,14 @@
     });
   }
 
-  // ─── 18. MARQUEE SPEED ────────────────────────────────────
+  // ─── 18. MARQUEE SPEED (ON-DEMAND) ────────────────────────
   function initMarqueeSpeed() {
     const tracks = qsa('.marquee-track');
     if (!tracks.length) return;
 
     let scrollVelocity = 0;
     let lastScrollY = window.scrollY;
-
-    function onScroll() {
-      const currentY = window.scrollY;
-      scrollVelocity = Math.abs(currentY - lastScrollY);
-      lastScrollY = currentY;
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
+    let marqueeRaf = null;
 
     function updateMarquee() {
       const rate = clamp(1.6 + scrollVelocity * 0.018, 1.6, 3.2);
@@ -1877,10 +1916,54 @@
         }
       });
 
-      requestAnimationFrame(updateMarquee);
+      if (scrollVelocity > 0.1) {
+        marqueeRaf = requestAnimationFrame(updateMarquee);
+      } else {
+        marqueeRaf = null;
+      }
     }
 
-    requestAnimationFrame(updateMarquee);
+    onPassiveScroll(function (currentY) {
+      scrollVelocity = Math.abs(currentY - lastScrollY);
+      lastScrollY = currentY;
+      if (!marqueeRaf) {
+        marqueeRaf = requestAnimationFrame(updateMarquee);
+      }
+    });
+  }
+
+  // ─── 19. PROTECTED PHONE NUMBER REVEAL (ANTI-SCRAPER) ─────
+  function initPhoneProtection() {
+    const revealBtn = qs('#revealPhoneBtn');
+    const revealedWrap = qs('#revealedPhoneWrap');
+    const phoneLink = qs('#revealedPhoneLink');
+    const copyBtn = qs('#copyPhoneBtn');
+    if (!revealBtn || !revealedWrap || !phoneLink) return;
+
+    const parts = ['+48', '516', '494', '524'];
+
+    revealBtn.addEventListener('click', function () {
+      const formatted = parts.join(' ');
+      const telHref = 'tel:' + parts.join('');
+      phoneLink.textContent = formatted;
+      phoneLink.setAttribute('href', telHref);
+      revealBtn.classList.add('is-hidden');
+      revealedWrap.classList.remove('is-hidden');
+    });
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        const formatted = parts.join(' ');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(formatted).then(function () {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(function () {
+              copyBtn.textContent = 'Copy';
+            }, 1800);
+          }).catch(function () {});
+        }
+      });
+    }
   }
 
   // ─── SAFE INIT ────────────────────────────────────────────
@@ -1913,7 +1996,8 @@
       initCategoryFilter,
       initSmoothScroll,
       initBackToTop,
-      initMarqueeSpeed
+      initMarqueeSpeed,
+      initPhoneProtection
     ];
 
     modules.forEach(function (fn) {
