@@ -146,8 +146,28 @@
         <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
             <source src="assets/BGmobile.mp4" type="video/mp4">
         </video>
+        <div class="sky-celestial-glow" id="skyCelestialGlow"></div>
+        <canvas class="sky-starfield" id="skyStarfield"></canvas>
         <div class="sky-cloud-tunnel" id="skyCloudTunnel"></div>
         <div class="sky-bg-vignette" id="skyBgVignette"></div>
+    </div>
+
+    <!-- ========== FOREGROUND CLOUD-PARTING CHAPTER TRANSITIONS ========== -->
+    <div class="foreground-cloud-stage" id="foregroundCloudStage" aria-hidden="true">
+        <div class="fg-cloud-bank fg-cloud-bank--left" id="fgCloudLeft">
+            <div class="fg-cloud-puff fg-cloud-puff--main"></div>
+            <div class="fg-cloud-puff fg-cloud-puff--upper"></div>
+            <div class="fg-cloud-puff fg-cloud-puff--lower"></div>
+        </div>
+        <div class="fg-cloud-bank fg-cloud-bank--right" id="fgCloudRight">
+            <div class="fg-cloud-puff fg-cloud-puff--main"></div>
+            <div class="fg-cloud-puff fg-cloud-puff--upper"></div>
+            <div class="fg-cloud-puff fg-cloud-puff--lower"></div>
+        </div>
+        <div class="fg-cloud-chapter" id="fgCloudChapter">
+            <span class="fg-cloud-chapter-Phase" id="fgCloudChapterPhase">MORNING · 09:30</span>
+            <span class="fg-cloud-chapter-title" id="fgCloudChapterTitle">Stories in Motion</span>
+        </div>
     </div>
 
     <!-- ========== INTERACTIVE TIMECODE SCROLLBAR (REPLACES NATIVE SCROLLBAR) ========== -->

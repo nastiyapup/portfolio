@@ -192,6 +192,9 @@
     }, '-=0.4');
   }
 
+  // Shared hook so day/night scroll progress can wake the Dusk/Midnight starfield
+  let setStarfieldProgress = function () {};
+
   // ─── 3. SCROLL-DRIVEN DAY-TO-NIGHT BG VIDEO, SKY PALETTE & TIMECODE ────
   function initDayNightScrollExperience() {
     const bgVideo       = qs('#bgDayVideo');
@@ -301,6 +304,50 @@
       rootStyle.setProperty('--color-bg-card-hover', `rgba(${Math.round(cHov[0])}, ${Math.round(cHov[1])}, ${Math.round(cHov[2])}, ${cHov[3].toFixed(3)})`);
       rootStyle.setProperty('--sky-glass-strong', `rgba(${Math.round(gls[0])}, ${Math.round(gls[1])}, ${Math.round(gls[2])}, ${gls[3].toFixed(3)})`);
       rootStyle.setProperty('--sky-halo', `rgba(${Math.round(hlo[0])}, ${Math.round(hlo[1])}, ${Math.round(hlo[2])}, ${hlo[3].toFixed(3)})`);
+
+      // ── Arcing Sun-to-Moon Celestial Position & Directional Card Rim Lighting ──
+      // Daytime sun arcs from East (16%, 68%) -> Zenith Noon (50%, 12%) -> West Dusk (84%, 72%),
+      // then transitions into a high nocturnal moon/starlight glow (72%, 22%) at Midnight.
+      let celestialX = 50;
+      let celestialY = 20;
+      if (p <= 0.86) {
+        const sunNorm = clamp(p / 0.86, 0, 1);
+        celestialX = 16 + sunNorm * 68;
+        celestialY = 70 - Math.sin(sunNorm * Math.PI) * 58;
+      } else {
+        const nightT = clamp((p - 0.86) / 0.14, 0, 1);
+        celestialX = lerp(84, 72, nightT);
+        celestialY = lerp(70, 22, nightT);
+      }
+
+      // Normalize light direction relative to screen center (-1 = left/top, +1 = right/bottom)
+      const lightDirX = clamp((celestialX - 50) / 34, -1, 1);
+      const lightDirY = clamp((celestialY - 40) / 30, -1, 1);
+
+      // Specular rim inset highlights the card edge facing the sun/moon
+      const rimInsetX = (lightDirX * 1.65).toFixed(2) + 'px';
+      const rimInsetY = (lightDirY * 1.55).toFixed(2) + 'px';
+      // Cast shadow falls on the opposite side of the sun/moon
+      const castShadowX = (-lightDirX * 12).toFixed(1) + 'px';
+
+      const rimAlpha = p > 0.86 ? 0.44 : 0.56;
+      const washAlpha = p > 0.86 ? 0.11 : 0.16;
+      const celestialAlpha = p > 0.86 ? 0.16 : 0.25;
+      const coreR = Math.min(255, acc[0] + 28);
+      const coreG = Math.min(255, acc[1] + 28);
+      const coreB = Math.min(255, acc[2] + 28);
+
+      rootStyle.setProperty('--celestial-x', celestialX.toFixed(1) + '%');
+      rootStyle.setProperty('--celestial-y', celestialY.toFixed(1) + '%');
+      rootStyle.setProperty('--celestial-color', `rgba(${acc[0]}, ${acc[1]}, ${acc[2]}, ${celestialAlpha})`);
+      rootStyle.setProperty('--celestial-core', `rgba(${coreR}, ${coreG}, ${coreB}, ${(celestialAlpha * 1.45).toFixed(2)})`);
+      rootStyle.setProperty('--rim-inset-x', rimInsetX);
+      rootStyle.setProperty('--rim-inset-y', rimInsetY);
+      rootStyle.setProperty('--rim-glow-color', `rgba(${acc[0]}, ${acc[1]}, ${acc[2]}, ${rimAlpha})`);
+      rootStyle.setProperty('--rim-wash-color', `rgba(${acc[0]}, ${acc[1]}, ${acc[2]}, ${washAlpha})`);
+      rootStyle.setProperty('--cast-shadow-x', castShadowX);
+
+      setStarfieldProgress(p);
     }
 
     const allBgVideos = [bgVideo, bgMobileVideo].filter(Boolean);
@@ -1865,9 +1912,14 @@
     links.forEach(function (link) {
       link.addEventListener('click', function (e) {
         const hash = link.getAttribute('href');
-        if (!hash || hash === '#' || hash === '#project-preview') return;
+        if (!hash || hash === '#' || hash === '#project-preview' || hash.charAt(0) !== '#') return;
 
-        const target = qs(hash);
+        let target = null;
+        try {
+          target = qs(hash);
+        } catch (err) {
+          return;
+        }
         if (!target) return;
 
         e.preventDefault();
@@ -1966,6 +2018,285 @@
     }
   }
 
+  // ─── 20. FOREGROUND CLOUD-PARTING CHAPTER TRANSITIONS ─────
+  // Sweeps soft volumetric clouds across the foreground and parts them
+  // left & right when flying from Hero -> Selected Works and Works -> About
+  function initForegroundCloudTransitions() {
+    const stage      = qs('#foregroundCloudStage');
+    const leftBank   = qs('#fgCloudLeft');
+    const rightBank  = qs('#fgCloudRight');
+    const chapterBox = qs('#fgCloudChapter');
+    const phaseEl    = qs('#fgCloudChapterPhase');
+    const titleEl    = qs('#fgCloudChapterTitle');
+    const worksSec   = qs('#works');
+    const aboutSec   = qs('#about');
+
+    if (!stage || !leftBank || !rightBank || !worksSec || !aboutSec) return;
+
+    const gates = [
+      {
+        el: worksSec,
+        phase: 'MORNING · 09:30',
+        title: 'Stories in Motion'
+      },
+      {
+        el: aboutSec,
+        phase: 'DUSK · 20:45',
+        title: 'The Creator Behind the Lens'
+      }
+    ];
+
+    let activeGateIdx = -1;
+
+    function updateCloudGates() {
+      // Do not show foreground cloud gates if a modal is open
+      if (document.body.style.overflow === 'hidden') {
+        stage.style.opacity = '0';
+        stage.classList.remove('is-active');
+        return;
+      }
+
+      const vh = Math.max(window.innerHeight, 1);
+      // Trigger center when the incoming section's top crosses 62% of viewport height
+      const triggerY = vh * 0.62;
+      const halfSpan = vh * 0.54;
+
+      let bestGate = null;
+      let bestRawT = 0;
+      let bestAbsT = Infinity;
+      let bestIdx = -1;
+
+      for (let i = 0; i < gates.length; i++) {
+        const g = gates[i];
+        const rect = g.el.getBoundingClientRect();
+        // rawT goes from -1 (approaching gate) -> 0 (inside cloud bank) -> +1 (parted & entered section)
+        const rawT = (triggerY - rect.top) / halfSpan;
+        const absT = Math.abs(rawT);
+        if (absT < 1.0 && absT < bestAbsT) {
+          bestAbsT = absT;
+          bestRawT = rawT;
+          bestGate = g;
+          bestIdx = i;
+        }
+      }
+
+      if (!bestGate) {
+        stage.style.opacity = '0';
+        stage.classList.remove('is-active');
+        activeGateIdx = -1;
+        return;
+      }
+
+      if (bestIdx !== activeGateIdx) {
+        activeGateIdx = bestIdx;
+        if (phaseEl) phaseEl.textContent = bestGate.phase;
+        if (titleEl) titleEl.textContent = bestGate.title;
+      }
+
+      stage.classList.add('is-active');
+
+      // Smooth bell curve (0 -> 1 -> 0) for overall mist presence
+      const norm01 = clamp((bestRawT + 1) * 0.5, 0, 1);
+      const envelope = Math.sin(norm01 * Math.PI);
+      const stageOpacity = clamp(Math.pow(envelope, 0.85) * 0.92, 0, 0.92);
+      stage.style.opacity = stageOpacity.toFixed(3);
+
+      // From rawT = -1 to -0.22, clouds swell in to meet near center;
+      // From rawT = -0.22 to +1, clouds part wide to the left and right as camera flies through
+      let translateXvw = 0;
+      let scale = 1;
+      if (bestRawT < -0.22) {
+        const approachT = clamp((bestRawT + 1) / 0.78, 0, 1);
+        const easeIn = 1 - Math.pow(1 - approachT, 2);
+        translateXvw = (1 - easeIn) * 26; // 26vw -> 0vw (closing in)
+        scale = 0.88 + easeIn * 0.14;     // 0.88 -> 1.02
+      } else {
+        const partT = clamp((bestRawT + 0.22) / 1.22, 0, 1);
+        const easeOut = partT * partT * (3 - 2 * partT);
+        translateXvw = easeOut * 66;      // 0vw -> 66vw (parting wide apart)
+        scale = 1.02 + easeOut * 0.36;    // 1.02 -> 1.38 (passing camera)
+      }
+
+      const verticalDrift = (bestRawT * -18).toFixed(1);
+      leftBank.style.transform = `translate3d(${-translateXvw.toFixed(2)}vw, ${verticalDrift}px, 0) scale(${scale.toFixed(3)})`;
+      rightBank.style.transform = `translate3d(${translateXvw.toFixed(2)}vw, ${verticalDrift}px, 0) scale(${scale.toFixed(3)})`;
+
+      if (chapterBox) {
+        const textAlpha = clamp(Math.sin(norm01 * Math.PI) * 1.15 - 0.15, 0, 1);
+        const textScale = 0.92 + norm01 * 0.18;
+        const textY = (1 - norm01) * 18 - 9;
+        chapterBox.style.opacity = textAlpha.toFixed(3);
+        chapterBox.style.transform = `translate(-50%, calc(-50% + ${textY.toFixed(1)}px)) scale(${textScale.toFixed(3)})`;
+      }
+    }
+
+    onPassiveScroll(updateCloudGates);
+    window.addEventListener('resize', updateCloudGates, { passive: true });
+    updateCloudGates();
+  }
+
+  // ─── 21. EMERGENT NIGHT STARFIELD FINALE (DUSK -> MIDNIGHT) ─
+  // Dormant during daytime (0% CPU); emerges smoothly as the user flies
+  // into Dusk & Midnight around the About and Contact sections.
+  function initStarfieldFinale() {
+    const canvas = qs('#skyStarfield');
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext('2d');
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let currentAlpha = 0;
+    let starRaf = null;
+    let stars = [];
+    let shootingStar = null;
+    let nextShootingStarAt = 0;
+
+    function createStars() {
+      const count = width < 768 ? 72 : 120;
+      stars = [];
+      for (let i = 0; i < count; i++) {
+        // Concentrate stars in upper 82% of viewport sky
+        const yBias = Math.pow(Math.random(), 1.25) * 0.85;
+        const isBright = i < 9;
+        const hues = [
+          '255, 250, 244', // warm pearl
+          '216, 228, 255', // starlight blue-silver
+          '238, 214, 255', // twilight lavender
+          '255, 226, 188'  // champagne gold
+        ];
+        stars.push({
+          x: Math.random(),
+          y: yBias,
+          r: isBright ? (1.35 + Math.random() * 0.85) : (0.55 + Math.random() * 1.05),
+          baseAlpha: isBright ? (0.72 + Math.random() * 0.28) : (0.28 + Math.random() * 0.55),
+          speed: 0.8 + Math.random() * 2.2,
+          phase: Math.random() * Math.PI * 2,
+          rgb: hues[i % hues.length],
+          isBright: isBright
+        });
+      }
+    }
+
+    function resizeCanvas() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      createStars();
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    function spawnShootingStar(now) {
+      const startX = (0.18 + Math.random() * 0.62) * width;
+      const startY = (0.06 + Math.random() * 0.32) * height;
+      const angle = (Math.PI / 7) + Math.random() * (Math.PI / 10); // gentle diagonal arc
+      const dir = Math.random() > 0.35 ? 1 : -1;
+      shootingStar = {
+        x: startX,
+        y: startY,
+        vx: Math.cos(angle) * dir * (420 + Math.random() * 180),
+        vy: Math.sin(angle) * (240 + Math.random() * 120),
+        len: 75 + Math.random() * 55,
+        born: now,
+        life: 950 + Math.random() * 450
+      };
+    }
+
+    function renderStarfield(now) {
+      if (currentAlpha <= 0.01) {
+        starRaf = null;
+        return;
+      }
+
+      ctx.clearRect(0, 0, width, height);
+      const t = (now || performance.now()) * 0.001;
+
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        const twinkle = 0.62 + 0.38 * Math.sin(t * s.speed + s.phase);
+        const alpha = s.baseAlpha * twinkle * currentAlpha;
+        const sx = s.x * width;
+        const sy = s.y * height;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${s.rgb}, ${alpha.toFixed(3)})`;
+        ctx.fill();
+
+        // Delicate 4-point celestial cross-flare on the brightest stars
+        if (s.isBright && alpha > 0.35) {
+          const flareLen = s.r * 4.2;
+          ctx.strokeStyle = `rgba(${s.rgb}, ${(alpha * 0.38).toFixed(3)})`;
+          ctx.lineWidth = 0.75;
+          ctx.beginPath();
+          ctx.moveTo(sx - flareLen, sy);
+          ctx.lineTo(sx + flareLen, sy);
+          ctx.moveTo(sx, sy - flareLen);
+          ctx.lineTo(sx, sy + flareLen);
+          ctx.stroke();
+        }
+      }
+
+      // Occasional delicate shooting star during deep Dusk / Midnight
+      const ts = now || performance.now();
+      if (currentAlpha > 0.55) {
+        if (!shootingStar && ts > nextShootingStarAt) {
+          spawnShootingStar(ts);
+          nextShootingStarAt = ts + 4800 + Math.random() * 4200;
+        }
+      }
+
+      if (shootingStar) {
+        const age = ts - shootingStar.born;
+        if (age >= shootingStar.life) {
+          shootingStar = null;
+        } else {
+          const prog = age / shootingStar.life;
+          const fade = Math.sin(prog * Math.PI) * currentAlpha;
+          const dt = age * 0.001;
+          const headX = shootingStar.x + shootingStar.vx * dt;
+          const headY = shootingStar.y + shootingStar.vy * dt;
+          const speedMag = Math.hypot(shootingStar.vx, shootingStar.vy) || 1;
+          const tailX = headX - (shootingStar.vx / speedMag) * shootingStar.len;
+          const tailY = headY - (shootingStar.vy / speedMag) * shootingStar.len;
+
+          const grad = ctx.createLinearGradient(headX, headY, tailX, tailY);
+          grad.addColorStop(0, `rgba(255, 250, 244, ${(fade * 0.92).toFixed(3)})`);
+          grad.addColorStop(0.35, `rgba(216, 200, 255, ${(fade * 0.45).toFixed(3)})`);
+          grad.addColorStop(1, 'rgba(216, 200, 255, 0)');
+
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(headX, headY);
+          ctx.lineTo(tailX, tailY);
+          ctx.stroke();
+        }
+      }
+
+      starRaf = requestAnimationFrame(renderStarfield);
+    }
+
+    setStarfieldProgress = function (skyProgress) {
+      // Stars begin emerging at Golden Hour/Dusk (0.66) and reach full brilliance by Midnight (0.92)
+      const targetAlpha = clamp((skyProgress - 0.66) / 0.26, 0, 1);
+      currentAlpha = targetAlpha;
+      canvas.style.opacity = targetAlpha.toFixed(3);
+
+      if (targetAlpha > 0.01 && !starRaf) {
+        if (!nextShootingStarAt) {
+          nextShootingStarAt = performance.now() + 1800;
+        }
+        starRaf = requestAnimationFrame(renderStarfield);
+      }
+    };
+  }
+
   // ─── SAFE INIT ────────────────────────────────────────────
   function init() {
     // 1. Always start preloader immediately so the page can never get stuck on 0%
@@ -1980,8 +2311,10 @@
 
     // 3. Run each module inside an isolated safety block
     const modules = [
+      initStarfieldFinale,
       initDayNightScrollExperience,
       initLetterbox,
+      initForegroundCloudTransitions,
       initCursor,
       initMagneticButtons,
       initNavigation,

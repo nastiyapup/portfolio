@@ -20,6 +20,17 @@
     --sky-halo:          rgba(42, 28, 64, 0.34);
     --sky-glass-strong:  rgba(46, 34, 68, 0.32);
 
+    /* Dynamic Directional Sun-to-Moon Rim Lighting & Celestial Arc */
+    --rim-inset-x:       1.5px;
+    --rim-inset-y:       -1px;
+    --rim-glow-color:    rgba(255, 214, 165, 0.52);
+    --rim-wash-color:    rgba(255, 214, 165, 0.14);
+    --cast-shadow-x:     -8px;
+    --celestial-x:       18%;
+    --celestial-y:       66%;
+    --celestial-color:   rgba(255, 214, 165, 0.24);
+    --celestial-core:    rgba(255, 244, 224, 0.36);
+
     --font-heading: 'Instrument Serif', 'Georgia', serif;
     --font-body:    'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
     --font-mono:    'JetBrains Mono', 'SF Mono', monospace;
@@ -152,6 +163,42 @@ ul, ol { list-style: none; }
     display: none;
 }
 
+/* Arcing Sun-to-Moon Celestial Light Source */
+.sky-celestial-glow {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(
+            circle 280px at var(--celestial-x) var(--celestial-y),
+            var(--celestial-core) 0%,
+            var(--celestial-color) 36%,
+            transparent 74%
+        ),
+        radial-gradient(
+            ellipse 65vw 48vh at var(--celestial-x) var(--celestial-y),
+            var(--celestial-color) 0%,
+            transparent 72%
+        );
+    mix-blend-mode: screen;
+    will-change: background, opacity;
+    transition: opacity 0.4s ease;
+}
+
+/* Emergent Dusk-to-Midnight Starfield Finale Canvas */
+.sky-starfield {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    will-change: opacity;
+}
+
 /* Subtle 3D cloud mist corridor that drifts outward as you fly forward */
 .sky-cloud-tunnel {
     position: absolute;
@@ -159,10 +206,11 @@ ul, ol { list-style: none; }
     pointer-events: none;
     overflow: hidden;
     perspective: 900px;
-    z-index: 1;
+    z-index: 2;
 }
 
-.tunnel-cloud {
+.tunnel-cloud,
+.sky-cloud-wisp {
     position: absolute;
     border-radius: 50%;
     background: radial-gradient(
@@ -180,13 +228,123 @@ ul, ol { list-style: none; }
 .sky-bg-vignette {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     background:
         radial-gradient(circle at 50% 48%, transparent 0%, var(--sky-halo) 100%),
         linear-gradient(180deg, rgba(28, 20, 48, 0.14) 0%, transparent 45%, rgba(28, 20, 48, 0.18) 100%);
     opacity: 1;
     will-change: opacity;
     pointer-events: none;
+}
+
+/* ==============================================
+   FOREGROUND CLOUD-PARTING CHAPTER TRANSITIONS
+   Sweeps across & parts left/right between sections
+   ============================================== */
+.foreground-cloud-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    will-change: opacity;
+}
+
+.foreground-cloud-stage.is-active {
+    visibility: visible;
+}
+
+.fg-cloud-bank {
+    position: absolute;
+    top: -10vh;
+    width: 78vw;
+    height: 120vh;
+    pointer-events: none;
+    will-change: transform, opacity;
+    filter: blur(26px);
+}
+
+.fg-cloud-bank--left {
+    left: -18vw;
+    transform-origin: left center;
+}
+
+.fg-cloud-bank--right {
+    right: -18vw;
+    transform-origin: right center;
+}
+
+.fg-cloud-puff {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background:
+        radial-gradient(
+            ellipse at 50% 42%,
+            rgba(255, 252, 249, 0.56) 0%,
+            var(--rim-glow-color) 28%,
+            rgba(248, 236, 246, 0.24) 54%,
+            transparent 76%
+        );
+    box-shadow: inset var(--rim-inset-x) var(--rim-inset-y) 36px var(--rim-glow-color);
+}
+
+.fg-cloud-puff--main {
+    width: 68vw;
+    height: 64vh;
+    top: 20vh;
+    left: 4vw;
+}
+
+.fg-cloud-puff--upper {
+    width: 54vw;
+    height: 48vh;
+    top: 4vh;
+    left: 12vw;
+    opacity: 0.85;
+}
+
+.fg-cloud-puff--lower {
+    width: 60vw;
+    height: 50vh;
+    bottom: 4vh;
+    left: 8vw;
+    opacity: 0.82;
+}
+
+.fg-cloud-chapter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.fg-cloud-chapter-Phase {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    text-shadow: 0 2px 16px rgba(14, 10, 28, 0.75);
+}
+
+.fg-cloud-chapter-title {
+    font-family: var(--font-heading);
+    font-style: italic;
+    font-size: clamp(26px, 4vw, 46px);
+    font-weight: 400;
+    color: var(--color-text);
+    letter-spacing: 0.02em;
+    text-shadow: 0 6px 28px rgba(14, 10, 28, 0.78), 0 0 36px var(--color-accent-glow);
 }
 
 
@@ -1311,7 +1469,10 @@ body.is-scrubbing * {
     backdrop-filter: blur(18px) saturate(150%);
     -webkit-backdrop-filter: blur(18px) saturate(150%);
     border: 1px solid var(--color-border);
-    box-shadow: 0 16px 42px var(--sky-halo);
+    box-shadow:
+        var(--cast-shadow-x) 18px 44px var(--sky-halo),
+        inset var(--rim-inset-x) var(--rim-inset-y) 0 0 var(--rim-glow-color),
+        inset 0 1px 18px var(--rim-wash-color);
     will-change: transform, opacity, filter;
     transform-origin: center center;
     transition: border-color 0.35s, background 0.35s, box-shadow 0.4s var(--ease-out-expo);
@@ -1320,7 +1481,11 @@ body.is-scrubbing * {
 .work-card:hover {
     border-color: var(--color-border-hover);
     background: var(--color-bg-card-hover);
-    box-shadow: 0 24px 56px var(--sky-halo), 0 0 28px var(--color-accent-glow);
+    box-shadow:
+        var(--cast-shadow-x) 24px 56px var(--sky-halo),
+        0 0 28px var(--color-accent-glow),
+        inset var(--rim-inset-x) var(--rim-inset-y) 0 0.5px var(--color-accent),
+        inset 0 1px 22px var(--rim-wash-color);
     z-index: 6;
 }
 
@@ -2316,7 +2481,10 @@ body.is-scrubbing * {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: 28px 32px;
-    box-shadow: 0 24px 60px var(--sky-halo), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    box-shadow:
+        var(--cast-shadow-x) 24px 60px var(--sky-halo),
+        inset var(--rim-inset-x) var(--rim-inset-y) 0 0 var(--rim-glow-color),
+        inset 0 1px 18px var(--rim-wash-color);
 }
 
 .about-body p {
@@ -2508,7 +2676,10 @@ body.is-scrubbing * {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 20px 52px var(--sky-halo), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    box-shadow:
+        var(--cast-shadow-x) 20px 52px var(--sky-halo),
+        inset var(--rim-inset-x) var(--rim-inset-y) 0 0 var(--rim-glow-color),
+        inset 0 1px 16px var(--rim-wash-color);
     transition: border-color 0.35s, background 0.35s, transform 0.45s var(--ease-out-expo);
 }
 
@@ -2640,7 +2811,10 @@ body.is-scrubbing * {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     padding: clamp(32px, 5vw, 52px);
-    box-shadow: 0 28px 72px var(--sky-halo), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    box-shadow:
+        var(--cast-shadow-x) 28px 72px var(--sky-halo),
+        inset var(--rim-inset-x) var(--rim-inset-y) 0 0 var(--rim-glow-color),
+        inset 0 1px 20px var(--rim-wash-color);
 }
 
 .contact-heading {
