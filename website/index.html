@@ -140,34 +140,11 @@
 
     <!-- ========== SCROLL-DRIVEN DAY-TO-NIGHT BACKGROUND VIDEO ========== -->
     <div class="sky-bg" aria-hidden="true">
-        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" src="assets/BGvideo.mp4" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
-            <source src="assets/BGvideo.mp4" type="video/mp4">
-        </video>
-        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture>
-            <source src="assets/BGmobile.mp4" type="video/mp4">
-        </video>
-        <div class="sky-celestial-glow" id="skyCelestialGlow"></div>
+        <video class="sky-bg-video sky-bg-video--desktop" id="bgDayVideo" src="assets/BGvideo.mp4?v=3" poster="assets/bg_poster.jpg" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
+        <video class="sky-bg-video sky-bg-video--mobile" id="bgMobileVideo" src="assets/BGmobile.mp4?v=3" poster="assets/bg_mobile_poster.jpg?v=3" muted playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
         <canvas class="sky-starfield" id="skyStarfield"></canvas>
         <div class="sky-cloud-tunnel" id="skyCloudTunnel"></div>
         <div class="sky-bg-vignette" id="skyBgVignette"></div>
-    </div>
-
-    <!-- ========== FOREGROUND CLOUD-PARTING CHAPTER TRANSITIONS ========== -->
-    <div class="foreground-cloud-stage" id="foregroundCloudStage" aria-hidden="true">
-        <div class="fg-cloud-bank fg-cloud-bank--left" id="fgCloudLeft">
-            <div class="fg-cloud-puff fg-cloud-puff--main"></div>
-            <div class="fg-cloud-puff fg-cloud-puff--upper"></div>
-            <div class="fg-cloud-puff fg-cloud-puff--lower"></div>
-        </div>
-        <div class="fg-cloud-bank fg-cloud-bank--right" id="fgCloudRight">
-            <div class="fg-cloud-puff fg-cloud-puff--main"></div>
-            <div class="fg-cloud-puff fg-cloud-puff--upper"></div>
-            <div class="fg-cloud-puff fg-cloud-puff--lower"></div>
-        </div>
-        <div class="fg-cloud-chapter" id="fgCloudChapter">
-            <span class="fg-cloud-chapter-Phase" id="fgCloudChapterPhase">MORNING · 09:30</span>
-            <span class="fg-cloud-chapter-title" id="fgCloudChapterTitle">Stories in Motion</span>
-        </div>
     </div>
 
     <!-- ========== INTERACTIVE TIMECODE SCROLLBAR (REPLACES NATIVE SCROLLBAR) ========== -->
@@ -325,7 +302,7 @@
                     <span class="frame-corner frame-corner--br"></span>
                 </div>
                 <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="OBMF8K280dk">
-                    <div class="work-card-media" data-showcase-yt="OBMF8K280dk">
+                    <div class="work-card-media" data-showcase-video="true" data-preview-video="assets/previews/amelie-preview.mp4">
                         <img class="work-card-img" src="assets/Amelie/screenshots of movie/cover.jpg" alt="Amelie — Interactive Movie" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
@@ -392,7 +369,7 @@
                     <span class="frame-corner frame-corner--br"></span>
                 </div>
                 <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="_yAEpan9KDk">
-                    <div class="work-card-media" data-showcase-yt="_yAEpan9KDk" data-preview-end="22">
+                    <div class="work-card-media" data-showcase-video="true" data-preview-video="assets/previews/museum-asia-preview.mp4">
                         <img class="work-card-img" src="https://i.ytimg.com/vi/_yAEpan9KDk/maxresdefault.jpg" alt="Cabinet of Memories" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
@@ -425,7 +402,7 @@
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--vertical" data-scroll-reveal-card data-category="motion">
                 <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="QLPmFjoWMt8">
-                    <div class="work-card-media">
+                    <div class="work-card-media" data-showcase-video="true" data-preview-video="assets/previews/english-tutor-preview.mp4">
                         <img class="work-card-img" src="assets/English tutor AD/image_2026-10-23_00-32-04.png" alt="English Tutor — Ad" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
@@ -621,8 +598,8 @@
                  ════════════════════════════════════════ -->
             <article class="work-card work-card--frutiger-cover" data-scroll-reveal-card data-category="motion 3d">
                 <a href="#project-preview" class="work-card-link" data-cursor-video data-yt-id="SSdUnnOFxc4">
-                    <div class="work-card-media">
-                        <img class="work-card-img" src="https://i.ytimg.com/vi/SSdUnnOFxc4/maxresdefault.jpg" alt="The Future We Were Promised" loading="lazy">
+                    <div class="work-card-media" data-showcase-video="true" data-preview-video="assets/previews/frutiger-preview.mp4">
+                        <img class="work-card-img" src="assets/previews/frutiger-cover.jpg" alt="The Future We Were Promised" loading="lazy">
                         <div class="work-card-overlay"></div>
                     </div>
                     <div class="work-card-content">

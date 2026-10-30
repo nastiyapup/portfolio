@@ -20,16 +20,12 @@
     --sky-halo:          rgba(42, 28, 64, 0.34);
     --sky-glass-strong:  rgba(46, 34, 68, 0.32);
 
-    /* Dynamic Directional Sun-to-Moon Rim Lighting & Celestial Arc */
+    /* Dynamic Directional Sun-to-Moon Rim Lighting */
     --rim-inset-x:       1.5px;
     --rim-inset-y:       -1px;
     --rim-glow-color:    rgba(255, 214, 165, 0.52);
     --rim-wash-color:    rgba(255, 214, 165, 0.14);
     --cast-shadow-x:     -8px;
-    --celestial-x:       18%;
-    --celestial-y:       66%;
-    --celestial-color:   rgba(255, 214, 165, 0.24);
-    --celestial-core:    rgba(255, 244, 224, 0.36);
 
     --font-heading: 'Instrument Serif', 'Georgia', serif;
     --font-body:    'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
@@ -163,29 +159,6 @@ ul, ol { list-style: none; }
     display: none;
 }
 
-/* Arcing Sun-to-Moon Celestial Light Source */
-.sky-celestial-glow {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-        radial-gradient(
-            circle 280px at var(--celestial-x) var(--celestial-y),
-            var(--celestial-core) 0%,
-            var(--celestial-color) 36%,
-            transparent 74%
-        ),
-        radial-gradient(
-            ellipse 65vw 48vh at var(--celestial-x) var(--celestial-y),
-            var(--celestial-color) 0%,
-            transparent 72%
-        );
-    mix-blend-mode: screen;
-    will-change: background, opacity;
-    transition: opacity 0.4s ease;
-}
-
 /* Emergent Dusk-to-Midnight Starfield Finale Canvas */
 .sky-starfield {
     position: absolute;
@@ -215,11 +188,11 @@ ul, ol { list-style: none; }
     border-radius: 50%;
     background: radial-gradient(
         ellipse at center,
-        rgba(255, 250, 252, 0.22) 0%,
-        rgba(255, 244, 250, 0.10) 42%,
-        transparent 72%
+        rgba(255, 250, 252, 0.34) 0%,
+        rgba(255, 244, 250, 0.16) 44%,
+        transparent 74%
     );
-    filter: blur(28px);
+    filter: blur(22px);
     will-change: transform, opacity;
     pointer-events: none;
 }
@@ -237,115 +210,7 @@ ul, ol { list-style: none; }
     pointer-events: none;
 }
 
-/* ==============================================
-   FOREGROUND CLOUD-PARTING CHAPTER TRANSITIONS
-   Sweeps across & parts left/right between sections
-   ============================================== */
-.foreground-cloud-stage {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    pointer-events: none;
-    overflow: hidden;
-    opacity: 0;
-    visibility: hidden;
-    will-change: opacity;
-}
 
-.foreground-cloud-stage.is-active {
-    visibility: visible;
-}
-
-.fg-cloud-bank {
-    position: absolute;
-    top: -10vh;
-    width: 78vw;
-    height: 120vh;
-    pointer-events: none;
-    will-change: transform, opacity;
-    filter: blur(26px);
-}
-
-.fg-cloud-bank--left {
-    left: -18vw;
-    transform-origin: left center;
-}
-
-.fg-cloud-bank--right {
-    right: -18vw;
-    transform-origin: right center;
-}
-
-.fg-cloud-puff {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    background:
-        radial-gradient(
-            ellipse at 50% 42%,
-            rgba(255, 252, 249, 0.56) 0%,
-            var(--rim-glow-color) 28%,
-            rgba(248, 236, 246, 0.24) 54%,
-            transparent 76%
-        );
-    box-shadow: inset var(--rim-inset-x) var(--rim-inset-y) 36px var(--rim-glow-color);
-}
-
-.fg-cloud-puff--main {
-    width: 68vw;
-    height: 64vh;
-    top: 20vh;
-    left: 4vw;
-}
-
-.fg-cloud-puff--upper {
-    width: 54vw;
-    height: 48vh;
-    top: 4vh;
-    left: 12vw;
-    opacity: 0.85;
-}
-
-.fg-cloud-puff--lower {
-    width: 60vw;
-    height: 50vh;
-    bottom: 4vh;
-    left: 8vw;
-    opacity: 0.82;
-}
-
-.fg-cloud-chapter {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    text-align: center;
-    pointer-events: none;
-    will-change: transform, opacity;
-}
-
-.fg-cloud-chapter-Phase {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--color-accent);
-    text-shadow: 0 2px 16px rgba(14, 10, 28, 0.75);
-}
-
-.fg-cloud-chapter-title {
-    font-family: var(--font-heading);
-    font-style: italic;
-    font-size: clamp(26px, 4vw, 46px);
-    font-weight: 400;
-    color: var(--color-text);
-    letter-spacing: 0.02em;
-    text-shadow: 0 6px 28px rgba(14, 10, 28, 0.78), 0 0 36px var(--color-accent-glow);
-}
 
 
 /* ==============================================
@@ -1620,12 +1485,35 @@ body.is-scrubbing * {
 .work-card--frutiger-cover .work-card-img {
     object-fit: cover;
     object-position: center center;
-    transform: scale(1.36);
+    transform: scale(1.02);
     transform-origin: center center;
 }
 
 .work-card--frutiger-cover:hover .work-card-img {
-    transform: scale(1.44);
+    transform: scale(1.07);
+}
+
+/* Optimized Native MP4 Preview Videos (Zero YouTube UI, Instant Play) */
+.work-card-preview-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(1.01);
+    transition: opacity 0.4s ease, transform 0.75s var(--ease-out-expo);
+}
+
+.work-card-preview-video.is-playing {
+    opacity: 1;
+}
+
+.work-card:hover .work-card-preview-video {
+    transform: scale(1.05);
 }
 
 /* Dynamic Live Hover & Showcase Preview Iframes (strictly centered & zoomed to eliminate black bars) */
