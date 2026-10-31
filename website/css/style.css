@@ -159,6 +159,16 @@ ul, ol { list-style: none; }
     display: none;
 }
 
+/* Vertical screens & Mobile displays: strictly show vertical BGmobile.mp4 */
+@media (max-width: 991px), (orientation: portrait), (max-aspect-ratio: 1/1) {
+    .sky-bg-video--desktop {
+        display: none !important;
+    }
+    .sky-bg-video--mobile {
+        display: block !important;
+    }
+}
+
 /* Emergent Dusk-to-Midnight Starfield Finale Canvas */
 .sky-starfield {
     position: absolute;
